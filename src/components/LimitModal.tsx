@@ -46,7 +46,7 @@ export function LimitModal({ isOpen, onClose, reason }: LimitModalProps) {
                 key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID, // This needs to be public
                 amount: orderData.amount,
                 currency: orderData.currency,
-                name: "Notion Template Architect",
+                name: "NotionStruct",
                 description: "Pro Subscription",
                 order_id: orderData.id,
                 handler: async function (response: any) {

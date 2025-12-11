@@ -6,7 +6,7 @@ import { BartlabsFooter } from "@/components/BartlabsFooter";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Notion Template Architect",
+  title: "NotionStruct",
   description: "Build professional Notion templates in seconds with AI",
   keywords: ["notion templates", "notion", "productivity", "templates", "notion marketplace", "habit tracker", "project tracker", "expense tracker", "bartlabs"],
   authors: [{ name: "Bartlabs" }],

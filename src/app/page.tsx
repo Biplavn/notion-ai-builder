@@ -129,7 +129,7 @@ function HomeContent() {
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold text-xl">
               N
             </div>
-            <span className="text-xl font-bold">Notion Template Architect</span>
+            <span className="text-xl font-bold">NotionStruct</span>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/education" className="text-muted-foreground hover:text-foreground transition-colors">
