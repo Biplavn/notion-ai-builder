@@ -42,7 +42,7 @@ export function canDownloadTemplate(
     currentDownloads: number
 ): boolean {
     const plan = PRICING.plans[planId]
-    const limit = plan.limits.templatesPerMonth
+    const limit = plan.limits.templatesLifetime
 
     // -1 means unlimited
     if (limit === -1) return true
