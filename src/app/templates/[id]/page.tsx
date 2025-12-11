@@ -3,16 +3,18 @@
 import { useState } from "react";
 import { ArrowLeft, Download, Star, CheckCircle, Loader2, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { CURATED_TEMPLATES } from "@/lib/templates/metadata";
 import { TEMPLATE_BLUEPRINTS } from "@/lib/templates/blueprints";
 import PREBUILT_BLUEPRINTS from "@/lib/templates/prebuilt_blueprints.json";
 import { getPreviewBlueprint } from "@/lib/templates/mockBlueprints";
+import { GetTemplateModal } from "@/components/GetTemplateModal";
 
 import { UserProfile } from "@/components/auth/UserProfile";
 
 export default function TemplateDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const templateId = params.id as string;
 
     const template = CURATED_TEMPLATES.find(t => t.id === templateId);
@@ -25,6 +27,7 @@ export default function TemplateDetailPage() {
     const [installStatus, setInstallStatus] = useState("");
     const [resultPageId, setResultPageId] = useState<string | null>(null);
     const [step, setStep] = useState<"details" | "success">("details");
+    const [showGetTemplateModal, setShowGetTemplateModal] = useState(false);
 
     if (!template) {
         return (
@@ -372,90 +375,36 @@ export default function TemplateDetailPage() {
                             </div>
 
 
-                            {/* Priority 1: Notion Duplicate Link (Best UX) */}
-                            {template.duplicateLink ? (
-                                <>
-                                    <a
-                                        href={template.duplicateLink}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                        Duplicate to Notion
-                                    </a>
+                            {/* Single "Get Template" Button */}
+                            <button
+                                onClick={() => setShowGetTemplateModal(true)}
+                                className="w-full bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Download className="w-4 h-4" />
+                                Get Template
+                            </button>
 
-                                    <div className="text-sm text-center text-muted-foreground space-y-2">
-                                        <p className="font-medium">One-click installation:</p>
-                                        <ol className="text-left space-y-1 text-xs">
-                                            <li>1. Click "Duplicate to Notion" above</li>
-                                            <li>2. Opens in your Notion workspace</li>
-                                            <li>3. Click "Duplicate" → Done! ✅</li>
-                                        </ol>
-                                    </div>
-                                </>
-                            ) : installBlueprint ? (
-                                /* Priority 2: Download JSON (Fallback) */
-                                <>
-                                    <button
-                                        onClick={handleInstall}
-                                        disabled={isInstalling}
-                                        className="w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        {isInstalling ? (
-                                            <>
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                Preparing...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Download className="w-4 h-4" />
-                                                Download Template
-                                            </>
-                                        )}
-                                    </button>
-
-                                    {installStatus && (
-                                        <div className="text-sm text-center text-muted-foreground">
-                                            {installStatus}
+                            <div className="text-sm text-center text-muted-foreground">
+                                <p className="font-medium mb-2">Choose your preferred method:</p>
+                                <div className="flex items-center justify-center gap-4 text-xs">
+                                    {template.duplicateLink && (
+                                        <div className="flex items-center gap-1">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                            <span>Instant duplicate</span>
                                         </div>
                                     )}
-
-                                    <div className="text-sm text-center text-muted-foreground space-y-2">
-                                        <p className="font-medium">Easy import:</p>
-                                        <ol className="text-left space-y-1 text-xs">
-                                            <li>1. Click "Download Template" above</li>
-                                            <li>2. Open Notion, type /import</li>
-                                            <li>3. Select the downloaded file ✅</li>
-                                        </ol>
+                                    <div className="flex items-center gap-1">
+                                        <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                                        <span>AI customization</span>
                                     </div>
-                                </>
-                            ) : (
-                                /* Priority 3: AI Generation (Last Resort) */
-                                <>
-                                    <Link
-                                        href={`/?prompt=${encodeURIComponent(`Create a ${template.name}: ${template.description}`)}`}
-                                        className="w-full bg-accent text-accent-foreground hover:bg-accent/90 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Star className="w-4 h-4" />
-                                        Build with AI
-                                    </Link>
-
-                                    <div className="text-sm text-center text-muted-foreground space-y-2">
-                                        <p className="font-medium">Custom AI Generation:</p>
-                                        <p className="text-xs">
-                                            This template will be custom-built by our AI to match your exact needs.
-                                            Click above to start!
-                                        </p>
-                                    </div>
-                                </>
-                            )}
+                                </div>
+                            </div>
 
 
                             <div className="pt-4 border-t border-border space-y-3 text-sm text-muted-foreground">
                                 <div className="flex items-start gap-2">
                                     <CheckCircle className="w-4 h-4 mt-0.5 text-green-600" />
-                                    <span>One-click installation</span>
+                                    <span>Multiple installation options</span>
                                 </div>
                                 <div className="flex items-start gap-2">
                                     <CheckCircle className="w-4 h-4 mt-0.5 text-green-600" />
@@ -470,6 +419,23 @@ export default function TemplateDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Get Template Modal */}
+            <GetTemplateModal
+                isOpen={showGetTemplateModal}
+                onClose={() => setShowGetTemplateModal(false)}
+                template={template}
+                onSelectDuplicate={() => {
+                    if (template.duplicateLink) {
+                        window.open(template.duplicateLink, '_blank');
+                        setShowGetTemplateModal(false);
+                    }
+                }}
+                onSelectAI={() => {
+                    setShowGetTemplateModal(false);
+                    router.push(`/?prompt=${encodeURIComponent(`Create a ${template.name}: ${template.description}`)}`);
+                }}
+            />
         </div>
     );
 }
