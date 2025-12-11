@@ -25,9 +25,7 @@ create table if not exists public.users (
   notion_bot_id text,
   
   -- Usage Tracking
-  templates_downloaded_this_month integer default 0,
-  ai_generations_this_month integer default 0,
-  last_reset_date timestamptz default now(),
+  ai_generations_lifetime integer default 0, -- Total AI generations used (free users get 5 lifetime)
   
   -- Metadata
   created_at timestamptz default now(),
@@ -71,19 +69,8 @@ drop trigger if exists handle_updated_at on public.users;
 create trigger handle_updated_at before update on public.users
   for each row execute procedure moddatetime (updated_at);
 
--- 6. Function: Reset monthly usage counters
-create or replace function public.reset_monthly_usage()
-returns void as $$
-begin
-  update public.users
-  set 
-    templates_downloaded_this_month = 0,
-    ai_generations_this_month = 0,
-    last_reset_date = now()
-  where 
-    last_reset_date < date_trunc('month', now());
-end;
-$$ language plpgsql security definer;
+-- 6. Monthly reset function removed (AI generations are now lifetime limited)
+
 
 -- 7. Template Downloads Table (Track what users download)
 create table if not exists public.template_downloads (

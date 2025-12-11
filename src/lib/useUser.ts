@@ -17,8 +17,7 @@ export type UserProfile = {
     notion_access_token: string | null
     notion_workspace_id: string | null
     notion_workspace_name: string | null
-    templates_downloaded_this_month: number
-    ai_generations_this_month: number
+    ai_generations_lifetime: number
 }
 
 export function useUser() {
@@ -82,14 +81,12 @@ export function useUser() {
     // Get current plan details from config
     const planDetails = user ? pricingConfig.plans[user.subscription_plan] : null
 
-    // Check if user can download more templates
-    const canDownloadTemplate = user
-        ? (user.subscription_plan === "pro" || user.templates_downloaded_this_month < pricingConfig.plans.free.limits.templatesPerMonth)
-        : false
+    // Free templates are unlimited for everyone
+    const canDownloadTemplate = true
 
-    // Check if user can use AI
+    // Check if user can use AI (free users get 5 lifetime generations)
     const canUseAI = user
-        ? (user.subscription_plan === "pro" || user.ai_generations_this_month < pricingConfig.plans.free.limits.aiGenerations)
+        ? (user.subscription_plan === "pro" || user.ai_generations_lifetime < pricingConfig.plans.free.limits.aiGenerations)
         : false
 
     return {

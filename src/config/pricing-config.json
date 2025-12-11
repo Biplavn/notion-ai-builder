@@ -14,41 +14,43 @@
             "currency": "INR",
             "interval": "forever",
             "limits": {
-                "templatesPerMonth": 3,
+                "templatesLifetime": -1,
+                "premiumTemplates": 0,
                 "aiGenerations": 5,
                 "storage": "100MB"
             },
             "features": [
-                "3 template downloads per month",
-                "5 AI generations",
-                "Basic templates",
+                "Unlimited free templates",
+                "5 AI generations (lifetime)",
+                "Basic templates only",
                 "Community support"
             ]
         },
         "pro": {
             "name": "Pro",
-            "price": 200,
+            "price": 799,
             "currency": "INR",
             "interval": "monthly",
             "limits": {
-                "templatesPerMonth": -1,
+                "templatesLifetime": -1,
+                "premiumTemplates": -1,
                 "aiGenerations": -1,
-                "storage": "5GB"
+                "storage": "unlimited"
             },
             "features": [
                 "Unlimited template downloads",
                 "Unlimited AI generations",
-                "Premium templates",
+                "Access to all Pro templates",
                 "Priority support",
-                "Early access to new templates",
+                "Early access to new features",
                 "Custom template requests"
             ]
         }
     },
     "trial": {
-        "enabled": true,
+        "enabled": false,
         "plan": "pro",
-        "durationDays": 7
+        "durationDays": 0
     },
     "paymentGateway": "https://payments.bartlabs.in"
 }

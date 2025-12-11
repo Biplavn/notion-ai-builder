@@ -113,8 +113,8 @@ export function LimitModal({ isOpen, onClose, reason }: LimitModalProps) {
 
                 <p className="text-muted-foreground mb-8">
                     {reason === "trial_expired"
-                        ? "Your 3-day free trial has ended. Upgrade to Pro to continue building unlimited templates."
-                        : "You've used all 3 free AI generations. Upgrade to Pro to unlock unlimited access."}
+                        ? "Your trial has ended. Upgrade to Pro to continue building unlimited templates."
+                        : "You've reached your limit. Upgrade to Pro for unlimited templates and AI generations."}
                 </p>
 
                 <div className="space-y-3">
@@ -124,7 +124,7 @@ export function LimitModal({ isOpen, onClose, reason }: LimitModalProps) {
                         className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium py-3 rounded-lg transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                        Upgrade to Pro ($2/mo)
+                        Upgrade to Pro (₹799/mo)
                     </button>
 
                     <button
