@@ -65,7 +65,7 @@ function HomeContent() {
         await supabase
           .from('users')
           .update({
-            ai_generations_this_month: (user.ai_generations_this_month || 0) + 1
+            ai_generations_lifetime: (user.ai_generations_lifetime || 0) + 1
           })
           .eq('id', user.id);
       }
