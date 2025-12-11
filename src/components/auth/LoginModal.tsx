@@ -57,16 +57,29 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
         setLoading(true);
         setError("");
         try {
-            const { error } = await supabase.auth.signInWithOAuth({
+            const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: "google",
                 options: {
                     redirectTo: `${window.location.origin}/auth/callback`,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'consent',
+                    },
                 },
             });
-            if (error) throw error;
+
+            if (error) {
+                // Check if it's a configuration error
+                if (error.message.includes('not enabled') || error.message.includes('provider')) {
+                    throw new Error('Google login is not configured yet. Please use email/password login or contact support.');
+                }
+                throw error;
+            }
+
             // OAuth will redirect, so we don't close the modal here
         } catch (err: any) {
-            setError(err.message || "An error occurred");
+            console.error('Google OAuth error:', err);
+            setError(err.message || "Google login is currently unavailable. Please use email/password login.");
             setLoading(false);
         }
     };
