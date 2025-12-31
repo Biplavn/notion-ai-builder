@@ -46,7 +46,9 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         author: "Bartlabs",
         downloads: 1247,
         rating: 4.9,
-        previewImage: "/templates/habit-tracker.png"
+        previewImage: "/templates/habit-tracker.png",
+        // TODO: Replace with your actual Notion template URL
+        duplicateLink: "https://www.notion.so/templates/habit-tracker-simple"
     },
     {
         id: "project-tracker",
