@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Download, Star } from "lucide-react";
+import { Download, Star, Heart } from "lucide-react";
 import { CURATED_TEMPLATES, TEMPLATE_CATEGORIES, TemplateMetadata } from "@/lib/templates/metadata";
 import { TemplateMockup } from "@/components/TemplateMockup";
+import { FavoriteButton } from "@/components/FavoriteButton";
 
 interface TemplateGalleryProps {
     searchQuery: string;
@@ -85,7 +86,8 @@ function TemplateCard({ template }: { template: TemplateMetadata }) {
                     </div>
 
                     {/* Pro/Free Badge */}
-                    <div className="absolute top-3 right-3">
+                    <div className="absolute top-3 right-3 flex items-center gap-2">
+                        <FavoriteButton templateId={template.id} size="sm" />
                         {template.isPro ? (
                             <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg uppercase tracking-wide">
                                 PRO

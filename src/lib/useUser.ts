@@ -18,6 +18,10 @@ export type UserProfile = {
     notion_workspace_id: string | null
     notion_workspace_name: string | null
     ai_generations_lifetime: number
+    bonus_credits: number
+    is_suspended: boolean
+    is_admin: boolean
+    created_at: string
 }
 
 export function useUser() {
