@@ -17,7 +17,7 @@ export async function POST(req: Request) {
         });
 
         const options = {
-            amount: 19900, // Amount in smallest currency unit (e.g., 19900 paise = 199 INR ~ $2.40)
+            amount: 79900, // Amount in smallest currency unit (79900 paise = ₹799 Pro subscription)
             currency: "INR",
             receipt: "receipt_" + Math.random().toString(36).substring(7),
         };
