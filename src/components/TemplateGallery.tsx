@@ -85,9 +85,11 @@ function TemplateCard({ template }: { template: TemplateMetadata }) {
                         {template.category}
                     </div>
 
-                    {/* Pro/Free Badge */}
+                    {/* Favorite & Pro/Free Badge */}
                     <div className="absolute top-3 right-3 flex items-center gap-2">
-                        <FavoriteButton templateId={template.id} size="sm" />
+                        <div className="bg-white/95 backdrop-blur-md rounded-full shadow-sm border border-gray-200">
+                            <FavoriteButton templateId={template.id} size="sm" />
+                        </div>
                         {template.isPro ? (
                             <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white shadow-lg uppercase tracking-wide">
                                 PRO
