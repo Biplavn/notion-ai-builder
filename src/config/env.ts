@@ -12,10 +12,14 @@ const envSchema = z.object({
     NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
     SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(), // Server-side only
 
-    // Notion API
+    // Notion API (OAuth - for user integrations)
     NOTION_CLIENT_ID: z.string().min(1).optional(),
     NOTION_CLIENT_SECRET: z.string().min(1).optional(),
     NOTION_REDIRECT_URI: z.string().url().optional(),
+
+    // Notion Admin API (Internal Integration - for AI template gallery)
+    NOTION_ADMIN_TOKEN: z.string().min(1).optional(),
+    NOTION_GALLERY_PAGE_ID: z.string().min(1).optional(),
 
     // Payments (Razorpay)
     NEXT_PUBLIC_RAZORPAY_KEY_ID: z.string().min(1).optional(),
@@ -49,6 +53,8 @@ export const env = envSchema.parse({
     NOTION_CLIENT_ID: process.env.NOTION_CLIENT_ID,
     NOTION_CLIENT_SECRET: process.env.NOTION_CLIENT_SECRET,
     NOTION_REDIRECT_URI: process.env.NOTION_REDIRECT_URI,
+    NOTION_ADMIN_TOKEN: process.env.NOTION_ADMIN_TOKEN,
+    NOTION_GALLERY_PAGE_ID: process.env.NOTION_GALLERY_PAGE_ID,
     NEXT_PUBLIC_RAZORPAY_KEY_ID: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
     RAZORPAY_KEY_SECRET: process.env.RAZORPAY_KEY_SECRET,
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
