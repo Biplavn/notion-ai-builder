@@ -189,16 +189,33 @@ export default function ProfilePage() {
                             </div>
                         </div>
 
-                        {/* Upgrade Button */}
-                        {!isPro && (
+                        {/* Action Buttons */}
+                        <div className="flex flex-col gap-3">
                             <Link
-                                href="/#pricing"
-                                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-blue-500/25"
+                                href="/dashboard"
+                                className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-900 dark:text-white font-medium rounded-xl transition-all"
                             >
-                                <Zap className="w-4 h-4" />
-                                Upgrade to Pro
+                                <Settings className="w-4 h-4" />
+                                Dashboard
                             </Link>
-                        )}
+                            {isPro ? (
+                                <Link
+                                    href="/subscription"
+                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-medium rounded-xl transition-all shadow-lg"
+                                >
+                                    <Crown className="w-4 h-4" />
+                                    Manage Subscription
+                                </Link>
+                            ) : (
+                                <Link
+                                    href="/#pricing"
+                                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all shadow-lg shadow-blue-500/25"
+                                >
+                                    <Zap className="w-4 h-4" />
+                                    Upgrade to Pro
+                                </Link>
+                            )}
+                        </div>
                     </div>
                 </div>
 

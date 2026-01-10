@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-    Users, LayoutTemplate, MessageSquare, BarChart3, Settings,
-    Search, ChevronDown, MoreHorizontal, Crown, Ban, Gift,
-    Plus, Minus, Check, X, ChevronLeft, ChevronRight, RefreshCw,
-    Sparkles, Download, Star, DollarSign, TrendingUp, Shield, Eye, EyeOff, Trash2
+    Users, LayoutTemplate, MessageSquare, BarChart3,
+    Search, Crown, Ban, Gift,
+    Plus, Minus, RefreshCw,
+    Sparkles, Download, Star, Shield, Eye, EyeOff, Trash2
 } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
 import { env } from "@/config/env";
@@ -150,8 +150,9 @@ function UsersTab({ supabase }: { supabase: any }) {
     const [users, setUsers] = useState<UserRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const [selectedUser, setSelectedUser] = useState<UserRecord | null>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
+    const [customCreditAmount, setCustomCreditAmount] = useState<number>(5);
+    const [showCreditModal, setShowCreditModal] = useState<string | null>(null);
 
     useEffect(() => {
         fetchUsers();
@@ -323,12 +324,10 @@ function UsersTab({ supabase }: { supabase: any }) {
 
                                             {/* Add Credits */}
                                             <button
-                                                onClick={() => updateUser(user.id, {
-                                                    bonus_credits: (user.bonus_credits || 0) + 5
-                                                })}
+                                                onClick={() => setShowCreditModal(user.id)}
                                                 disabled={actionLoading === user.id}
                                                 className="p-2 bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-green-400 rounded-lg transition-colors"
-                                                title="Add 5 Credits"
+                                                title="Manage Credits"
                                             >
                                                 <Gift className="w-4 h-4" />
                                             </button>
@@ -353,6 +352,100 @@ function UsersTab({ supabase }: { supabase: any }) {
                     </tbody>
                 </table>
             </div>
+
+            {/* Credit Management Modal */}
+            {showCreditModal && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+                    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+                        <h3 className="text-xl font-bold text-white mb-4">Manage Credits</h3>
+
+                        {(() => {
+                            const user = users.find(u => u.id === showCreditModal);
+                            return user ? (
+                                <>
+                                    <div className="mb-4 p-3 bg-gray-800 rounded-lg">
+                                        <p className="text-sm text-gray-400">User</p>
+                                        <p className="font-medium text-white">{user.full_name || user.email}</p>
+                                        <p className="text-sm text-gray-400 mt-2">Current Credits</p>
+                                        <p className="text-2xl font-bold text-green-400">{user.bonus_credits || 0}</p>
+                                    </div>
+
+                                    <div className="mb-4">
+                                        <label className="block text-sm font-medium text-gray-400 mb-2">
+                                            Credit Amount
+                                        </label>
+                                        <div className="flex items-center gap-2">
+                                            <button
+                                                onClick={() => setCustomCreditAmount(Math.max(1, customCreditAmount - 1))}
+                                                className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                                            >
+                                                <Minus className="w-4 h-4 text-gray-400" />
+                                            </button>
+                                            <input
+                                                type="number"
+                                                value={customCreditAmount}
+                                                onChange={(e) => setCustomCreditAmount(Math.max(1, parseInt(e.target.value) || 1))}
+                                                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-center"
+                                                min="1"
+                                            />
+                                            <button
+                                                onClick={() => setCustomCreditAmount(customCreditAmount + 1)}
+                                                className="p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                                            >
+                                                <Plus className="w-4 h-4 text-gray-400" />
+                                            </button>
+                                        </div>
+                                        <div className="flex gap-2 mt-2">
+                                            {[5, 10, 25, 50, 100].map(amount => (
+                                                <button
+                                                    key={amount}
+                                                    onClick={() => setCustomCreditAmount(amount)}
+                                                    className="px-3 py-1 bg-gray-800 hover:bg-gray-700 rounded text-xs text-gray-400 transition-colors"
+                                                >
+                                                    {amount}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <button
+                                            onClick={async () => {
+                                                await updateUser(showCreditModal, {
+                                                    bonus_credits: (user.bonus_credits || 0) + customCreditAmount
+                                                });
+                                                setShowCreditModal(null);
+                                            }}
+                                            className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Plus className="w-4 h-4" />
+                                            Add {customCreditAmount}
+                                        </button>
+                                        <button
+                                            onClick={async () => {
+                                                await updateUser(showCreditModal, {
+                                                    bonus_credits: Math.max(0, (user.bonus_credits || 0) - customCreditAmount)
+                                                });
+                                                setShowCreditModal(null);
+                                            }}
+                                            className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Minus className="w-4 h-4" />
+                                            Remove {customCreditAmount}
+                                        </button>
+                                    </div>
+                                    <button
+                                        onClick={() => setShowCreditModal(null)}
+                                        className="w-full mt-3 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg font-medium transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                </>
+                            ) : null;
+                        })()}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
