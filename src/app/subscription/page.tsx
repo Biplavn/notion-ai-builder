@@ -104,7 +104,7 @@ export default function SubscriptionPage() {
     if (!user) return null;
 
     const bonusCredits = user.bonus_credits || 0;
-    const totalCredits = bonusCredits + (isPro ? "Unlimited" : Math.max(0, 5 - (user.ai_generations_lifetime || 0)));
+    const totalCredits = isPro ? "Unlimited" : (Math.max(0, 5 - (user.ai_generations_lifetime || 0)) + bonusCredits);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
