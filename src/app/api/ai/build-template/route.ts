@@ -58,23 +58,38 @@ export async function POST(req: NextRequest) {
         console.log(`\n🚀 Building AI template in admin workspace: ${blueprint.title}`);
         console.log(`📍 Parent page: ${galleryPageId}`);
 
+
         // Build the template in admin's workspace
         const builder = new NotionBuilder(adminToken);
         const rootPageId = await builder.build(blueprint, galleryPageId);
 
         console.log(`✅ Template created with ID: ${rootPageId}`);
 
-        // Generate the duplicate link
-        // Format: https://www.notion.so/PAGE_TITLE-PAGE_ID?duplicate=true
-        const cleanId = rootPageId.replace(/-/g, "");
-        const templateSlug = blueprint.title
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, "-")
-            .replace(/(^-|-$)/g, "");
+        // Get the actual page URL from Notion API
+        const { Client } = await import('@notionhq/client');
+        const notion = new Client({ auth: adminToken });
 
-        const notionPageUrl = `https://www.notion.so/${templateSlug}-${cleanId}`;
-        const duplicateLink = `${notionPageUrl}?duplicate=true`;
+        let notionPageUrl: string;
+        let duplicateLink: string;
 
+        try {
+            const page = await notion.pages.retrieve({ page_id: rootPageId }) as any;
+            // Notion returns the URL in the 'url' field
+            notionPageUrl = page.url;
+            console.log(`📄 Page URL from Notion: ${notionPageUrl}`);
+        } catch (e) {
+            // Fallback: construct URL manually if API doesn't return it
+            const cleanId = rootPageId.replace(/-/g, "");
+            const templateSlug = blueprint.title
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/(^-|-$)/g, "");
+            notionPageUrl = `https://www.notion.so/${templateSlug}-${cleanId}`;
+            console.log(`📄 Constructed URL (fallback): ${notionPageUrl}`);
+        }
+
+        // Generate duplicate link
+        duplicateLink = `${notionPageUrl}?duplicate=true`;
         console.log(`🔗 Duplicate link: ${duplicateLink}`);
 
         // Update user's generation count
