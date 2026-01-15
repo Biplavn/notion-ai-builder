@@ -278,26 +278,46 @@ function HomeContent() {
             </div>
 
             {/* Primary CTA - Duplicate Button */}
-            <a
-              href={buildResult.duplicateLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full bg-gradient-to-r from-primary to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-3"
+            <button
+              onClick={() => {
+                // Open in a popup window with specific dimensions for better UX
+                const width = 800;
+                const height = 600;
+                const left = (window.screen.width - width) / 2;
+                const top = (window.screen.height - height) / 2;
+                window.open(
+                  buildResult.duplicateLink,
+                  'notion-duplicate',
+                  `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+                );
+              }}
+              className="w-full bg-gradient-to-r from-primary to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-3 cursor-pointer"
             >
               <Rocket className="w-5 h-5" />
               Duplicate to My Notion
               <ExternalLink className="w-4 h-4" />
-            </a>
+            </button>
+
+            {/* Alternative - Open Page Directly */}
+            <button
+              onClick={() => {
+                window.open(buildResult.notionUrl, '_blank');
+              }}
+              className="w-full bg-muted hover:bg-muted/80 text-foreground px-6 py-3 rounded-xl font-medium text-base transition-all flex items-center justify-center gap-2"
+            >
+              <ExternalLink className="w-4 h-4" />
+              Or open page directly in Notion
+            </button>
 
             {/* Instructions */}
-            <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-5 text-left">
-              <h3 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+            <div className="w-full bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-5 text-left">
+              <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
                 <span className="text-lg">📋</span> How it works:
               </h3>
-              <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
+              <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-2 list-decimal list-inside">
                 <li>Click the button above to open Notion</li>
-                <li>Choose which workspace to add it to</li>
-                <li>Click "Duplicate" in the popup</li>
+                <li>If a popup appears, choose your workspace and click "Duplicate"</li>
+                <li>If no popup appears, click "..." menu → "Duplicate" in Notion</li>
                 <li>Your template is now in your Notion! ✨</li>
               </ol>
             </div>
