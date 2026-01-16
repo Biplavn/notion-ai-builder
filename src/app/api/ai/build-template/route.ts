@@ -4,6 +4,7 @@ import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { env } from "@/config/env";
 import { TemplateBlueprint } from "@/lib/types/blueprint";
+import { updateCacheStats, storeBuiltTemplate } from "@/lib/cache/blueprintCache";
 
 /**
  * AI Template Builder - Admin Workspace Edition
@@ -18,8 +19,11 @@ import { TemplateBlueprint } from "@/lib/types/blueprint";
  * 4. User clicks duplicate link → copies to their Notion
  */
 export async function POST(req: NextRequest) {
+    let requestCacheId: string | undefined;
+
     try {
-        const { blueprint }: { blueprint: TemplateBlueprint } = await req.json();
+        const { blueprint, cacheId }: { blueprint: TemplateBlueprint; cacheId?: string } = await req.json();
+        requestCacheId = cacheId;
 
         // Validate user is authenticated
         const cookieStore = await cookies();
@@ -100,6 +104,24 @@ export async function POST(req: NextRequest) {
             })
             .eq('id', session.user.id);
 
+        // Update cache stats if this was a cached blueprint
+        if (cacheId) {
+            await updateCacheStats(cacheId, true);
+            console.log(`📊 Updated cache stats for blueprint: ${cacheId}`);
+        }
+
+        // Store the built template for future reference
+        await storeBuiltTemplate(
+            cacheId || null,
+            blueprint.title,
+            blueprint.description || "",
+            rootPageId,
+            notionPageUrl,
+            duplicateLink,
+            session.user.id
+        );
+        console.log(`💾 Stored built template in database`);
+
         return NextResponse.json({
             success: true,
             pageId: rootPageId,
@@ -110,6 +132,12 @@ export async function POST(req: NextRequest) {
 
     } catch (error: any) {
         console.error("❌ AI Template Build error:", error);
+
+        // Update cache stats for failed build
+        if (requestCacheId) {
+            await updateCacheStats(requestCacheId, false);
+        }
+
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 }

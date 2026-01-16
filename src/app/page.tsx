@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Sparkles, Search, Copy, ExternalLink, Database, CheckCircle, LayoutTemplate, Loader2, Rocket, X } from "lucide-react";
+import { Sparkles, Search, Copy, ExternalLink, Database, CheckCircle, LayoutTemplate, Loader2, Rocket } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -22,7 +22,7 @@ interface BuildResult {
 }
 
 function HomeContent() {
-  const { user, loading, canUseAI, supabase } = useUser();
+  const { user, isAuthenticated, canUseAI, supabase } = useUser();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLimitOpen, setIsLimitOpen] = useState(false);
   const [limitReason, setLimitReason] = useState<"trial_expired" | "limit_reached">("limit_reached");
@@ -36,6 +36,7 @@ function HomeContent() {
 
   const [step, setStep] = useState<"input" | "preview" | "success">("input");
   const [blueprint, setBlueprint] = useState<TemplateBlueprint | null>(null);
+  const [blueprintCacheId, setBlueprintCacheId] = useState<string | null>(null);
 
   // Handle URL prompt parameter (from template modal "Build with AI")
   useEffect(() => {
@@ -48,7 +49,8 @@ function HomeContent() {
   const handleGenerate = async () => {
     if (!prompt) return;
 
-    if (!user) {
+    // Check if user is authenticated - use isAuthenticated for immediate check
+    if (!isAuthenticated || !user) {
       setIsLoginOpen(true);
       return;
     }
@@ -73,8 +75,9 @@ function HomeContent() {
       if (!res.ok) throw new Error(data.error || "Failed to generate blueprint");
 
       setBlueprint(data.blueprint);
+      setBlueprintCacheId(data.cacheId || null);
       setStep("preview");
-      setStatus("");
+      setStatus(data.cached ? "Found a matching template!" : "");
     } catch (error: any) {
       console.error(error);
       setStatus(`Error: ${error.message}`);
@@ -88,11 +91,11 @@ function HomeContent() {
     setStatus("Building your template in Notion (this may take 30-60 seconds)...");
 
     try {
-      // Use the new admin build endpoint
+      // Use the new admin build endpoint with cache ID for tracking
       const buildRes = await fetch("/api/ai/build-template", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ blueprint: finalBlueprint }),
+        body: JSON.stringify({ blueprint: finalBlueprint, cacheId: blueprintCacheId }),
       });
       const buildData = await buildRes.json();
 
@@ -136,6 +139,7 @@ function HomeContent() {
     setPrompt("");
     setBuildResult(null);
     setBlueprint(null);
+    setBlueprintCacheId(null);
     setStatus("");
     setCopied(false);
   };
@@ -256,31 +260,31 @@ function HomeContent() {
           />
         )}
 
-        {/* Success Section - Beautiful Duplicate Link UI */}
+        {/* Success Section - Clean, Platform-Consistent Design */}
         {step === "success" && buildResult && (
-          <div className="animate-in zoom-in duration-500 flex flex-col items-center gap-6 max-w-lg mx-auto">
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 flex flex-col items-center gap-8 max-w-xl mx-auto w-full">
             {/* Success Animation */}
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full blur-xl opacity-30 animate-pulse"></div>
-              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-lg">
-                <CheckCircle className="w-10 h-10 text-white" />
+              <div className="absolute inset-0 bg-gradient-to-r from-accent to-purple-500 rounded-full blur-2xl opacity-20 animate-pulse"></div>
+              <div className="relative w-24 h-24 rounded-full bg-gradient-to-br from-accent to-purple-600 flex items-center justify-center shadow-2xl">
+                <CheckCircle className="w-12 h-12 text-white" />
               </div>
             </div>
 
             {/* Title */}
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
-                Your Template is Ready! 🎉
+            <div className="space-y-3 text-center">
+              <h2 className="text-4xl font-bold text-primary">
+                Your Template is Ready!
               </h2>
-              <p className="text-muted-foreground">
-                {blueprint?.title} has been created. Click below to add it to your Notion workspace.
+              <p className="text-lg text-muted-foreground">
+                <span className="font-semibold text-accent">{blueprint?.title}</span> has been created.
+                <br />Click below to add it to your Notion workspace.
               </p>
             </div>
 
             {/* Primary CTA - Duplicate Button */}
             <button
               onClick={() => {
-                // Open in a popup window with specific dimensions for better UX
                 const width = 800;
                 const height = 600;
                 const left = (window.screen.width - width) / 2;
@@ -291,57 +295,55 @@ function HomeContent() {
                   `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
                 );
               }}
-              className="w-full bg-gradient-to-r from-primary to-purple-600 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-3 cursor-pointer"
+              className="w-full max-w-md bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all hover:scale-[1.02] flex items-center justify-center gap-3"
             >
               <Rocket className="w-5 h-5" />
               Duplicate to My Notion
               <ExternalLink className="w-4 h-4" />
             </button>
 
-            {/* Alternative - Open Page Directly */}
-            <button
-              onClick={() => {
-                window.open(buildResult.notionUrl, '_blank');
-              }}
-              className="w-full bg-muted hover:bg-muted/80 text-foreground px-6 py-3 rounded-xl font-medium text-base transition-all flex items-center justify-center gap-2"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Or open page directly in Notion
-            </button>
-
-            {/* Instructions */}
-            <div className="w-full bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-5 text-left">
-              <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-3 flex items-center gap-2">
-                <span className="text-lg">📋</span> How it works:
+            {/* Instructions Card */}
+            <div className="w-full max-w-md bg-muted/50 border border-border rounded-xl p-6 text-left">
+              <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-sm">📋</span>
+                How it works
               </h3>
-              <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-2 list-decimal list-inside">
-                <li>Click the button above to open Notion</li>
-                <li>If a popup appears, choose your workspace and click "Duplicate"</li>
-                <li>If no popup appears, click "..." menu → "Duplicate" in Notion</li>
-                <li>Your template is now in your Notion! ✨</li>
+              <ol className="text-sm text-muted-foreground space-y-3">
+                <li className="flex items-start gap-3">
+                  <span className="w-5 h-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+                  <span>Click the button above to open Notion</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-5 h-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+                  <span>Choose your workspace and click "Duplicate"</span>
+                </li>
+                <li className="flex items-start gap-3">
+                  <span className="w-5 h-5 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+                  <span>Your template is now in your Notion!</span>
+                </li>
               </ol>
             </div>
 
             {/* Copy Link Option */}
             <button
               onClick={handleCopyLink}
-              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2 px-4 rounded-lg hover:bg-muted"
+              className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors py-2 px-4 rounded-lg hover:bg-muted border border-transparent hover:border-border"
             >
               <Copy className="w-4 h-4" />
               {copied ? "Link copied!" : "Copy duplicate link"}
             </button>
 
             {/* Secondary Actions */}
-            <div className="flex items-center gap-4 pt-4 border-t border-border w-full justify-center">
+            <div className="flex items-center gap-6 pt-4 border-t border-border w-full max-w-md justify-center">
               <button
                 onClick={handleReset}
-                className="text-primary hover:underline flex items-center gap-1"
+                className="text-primary hover:text-primary/80 flex items-center gap-2 font-medium transition-colors"
               >
                 <Sparkles className="w-4 h-4" />
-                Create another template
+                Create another
               </button>
-              <span className="text-muted-foreground">•</span>
-              <Link href="/templates" className="text-primary hover:underline">
+              <span className="text-border">|</span>
+              <Link href="/templates" className="text-primary hover:text-primary/80 font-medium transition-colors">
                 Browse templates
               </Link>
             </div>

@@ -1,0 +1,366 @@
+import { createClient } from "@supabase/supabase-js";
+import { TemplateBlueprint } from "@/lib/types/blueprint";
+
+// Server-side Supabase client with service role for cache operations
+function getSupabaseAdmin() {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+    return createClient(supabaseUrl, supabaseServiceKey);
+}
+
+export interface CachedBlueprint {
+    id: string;
+    prompt_original: string;
+    blueprint: TemplateBlueprint;
+    template_title: string;
+    similarity_score: number;
+    times_used: number;
+    avg_rating: number;
+}
+
+export interface CacheResult {
+    found: boolean;
+    blueprint?: TemplateBlueprint;
+    cacheId?: string;
+    similarity?: number;
+    source: "cache" | "generated";
+}
+
+// Normalize prompt for consistent matching
+function normalizePrompt(prompt: string): string {
+    return prompt
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+// Generate MD5-like hash for prompt (simple version)
+function generatePromptHash(prompt: string): string {
+    const normalized = normalizePrompt(prompt);
+    // Simple hash function for client-side use
+    let hash = 0;
+    for (let i = 0; i < normalized.length; i++) {
+        const char = normalized.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash).toString(16).padStart(8, "0");
+}
+
+// Common keywords for matching
+const KEYWORD_MAP: Record<string, string[]> = {
+    project: ["projects", "task", "tasks", "todo", "todos", "work", "kanban"],
+    habit: ["habits", "routine", "routines", "daily", "tracker", "streak"],
+    goal: ["goals", "objective", "objectives", "target", "targets", "okr", "milestone"],
+    budget: ["budgets", "money", "finance", "finances", "expense", "expenses", "income"],
+    workout: ["workouts", "exercise", "exercises", "fitness", "gym", "training", "health"],
+    meal: ["meals", "food", "recipe", "recipes", "cooking", "diet", "nutrition", "calories"],
+    crm: ["customer", "customers", "client", "clients", "sales", "leads", "pipeline"],
+    content: ["blog", "blogs", "writing", "article", "articles", "post", "posts", "editorial"],
+    study: ["studies", "learning", "course", "courses", "education", "class", "notes"],
+    travel: ["trip", "trips", "vacation", "vacations", "itinerary", "journey", "destination"],
+    reading: ["books", "book", "library", "reading list"],
+    journal: ["journaling", "diary", "gratitude", "reflection", "mood"],
+    inventory: ["stock", "warehouse", "products", "catalog", "assets"],
+    meeting: ["meetings", "agenda", "notes", "minutes", "standup"],
+    sprint: ["sprints", "agile", "scrum", "backlog"],
+};
+
+// Extract keywords from prompt
+function extractKeywords(prompt: string): string[] {
+    const normalized = normalizePrompt(prompt);
+    const words = normalized.split(" ");
+    const keywords: Set<string> = new Set();
+
+    for (const word of words) {
+        // Check if word matches any keyword or synonym
+        for (const [keyword, synonyms] of Object.entries(KEYWORD_MAP)) {
+            if (word === keyword || synonyms.includes(word)) {
+                keywords.add(keyword);
+            }
+        }
+    }
+
+    return Array.from(keywords);
+}
+
+// Calculate similarity between two prompts
+function calculateSimilarity(prompt1: string, prompt2: string): number {
+    const norm1 = normalizePrompt(prompt1);
+    const norm2 = normalizePrompt(prompt2);
+
+    // Keyword-based similarity (60% weight)
+    const keywords1 = new Set(extractKeywords(prompt1));
+    const keywords2 = new Set(extractKeywords(prompt2));
+    const intersection = new Set([...keywords1].filter((x) => keywords2.has(x)));
+    const union = new Set([...keywords1, ...keywords2]);
+    const keywordSimilarity = union.size > 0 ? intersection.size / union.size : 0;
+
+    // Word overlap similarity (40% weight)
+    const words1 = new Set(norm1.split(" ").filter((w) => w.length > 2));
+    const words2 = new Set(norm2.split(" ").filter((w) => w.length > 2));
+    const wordIntersection = new Set([...words1].filter((x) => words2.has(x)));
+    const wordUnion = new Set([...words1, ...words2]);
+    const wordSimilarity = wordUnion.size > 0 ? wordIntersection.size / wordUnion.size : 0;
+
+    return keywordSimilarity * 0.6 + wordSimilarity * 0.4;
+}
+
+/**
+ * Search for a similar cached blueprint
+ * Returns the best match if similarity score is above threshold
+ */
+export async function findCachedBlueprint(
+    prompt: string,
+    minSimilarity: number = 0.65
+): Promise<CacheResult> {
+    try {
+        const supabase = getSupabaseAdmin();
+        const keywords = extractKeywords(prompt);
+        const normalizedPrompt = normalizePrompt(prompt);
+        const promptHash = generatePromptHash(prompt);
+
+        // First, check for exact match by hash
+        const { data: exactMatch, error: exactError } = await supabase
+            .from("blueprint_cache")
+            .select("id, prompt_original, blueprint, template_title, times_used")
+            .eq("prompt_hash", promptHash)
+            .single();
+
+        if (exactMatch && !exactError) {
+            console.log(`[Cache] Exact match found for prompt: "${prompt.substring(0, 50)}..."`);
+            return {
+                found: true,
+                blueprint: exactMatch.blueprint as TemplateBlueprint,
+                cacheId: exactMatch.id,
+                similarity: 1.0,
+                source: "cache",
+            };
+        }
+
+        // If no exact match, search for similar blueprints
+        if (keywords.length > 0) {
+            const { data: similarBlueprints, error: searchError } = await supabase
+                .from("blueprint_cache")
+                .select("id, prompt_original, blueprint, template_title, times_used, avg_rating")
+                .contains("keywords", keywords)
+                .order("times_used", { ascending: false })
+                .limit(10);
+
+            if (!searchError && similarBlueprints && similarBlueprints.length > 0) {
+                // Calculate similarity scores and find best match
+                let bestMatch: CachedBlueprint | null = null;
+                let bestScore = 0;
+
+                for (const cached of similarBlueprints) {
+                    const score = calculateSimilarity(prompt, cached.prompt_original);
+                    if (score > bestScore && score >= minSimilarity) {
+                        bestScore = score;
+                        bestMatch = {
+                            id: cached.id,
+                            prompt_original: cached.prompt_original,
+                            blueprint: cached.blueprint as TemplateBlueprint,
+                            template_title: cached.template_title,
+                            similarity_score: score,
+                            times_used: cached.times_used,
+                            avg_rating: cached.avg_rating,
+                        };
+                    }
+                }
+
+                if (bestMatch) {
+                    console.log(
+                        `[Cache] Similar blueprint found (${(bestScore * 100).toFixed(1)}% match): "${bestMatch.template_title}"`
+                    );
+                    return {
+                        found: true,
+                        blueprint: bestMatch.blueprint,
+                        cacheId: bestMatch.id,
+                        similarity: bestScore,
+                        source: "cache",
+                    };
+                }
+            }
+        }
+
+        console.log(`[Cache] No suitable cached blueprint found for: "${prompt.substring(0, 50)}..."`);
+        return { found: false, source: "generated" };
+    } catch (error) {
+        console.error("[Cache] Error searching cache:", error);
+        return { found: false, source: "generated" };
+    }
+}
+
+/**
+ * Store a newly generated blueprint in the cache
+ */
+export async function cacheBlueprint(
+    prompt: string,
+    blueprint: TemplateBlueprint,
+    userId?: string
+): Promise<string | null> {
+    try {
+        const supabase = getSupabaseAdmin();
+        const promptHash = generatePromptHash(prompt);
+        const normalizedPrompt = normalizePrompt(prompt);
+        const keywords = extractKeywords(prompt);
+
+        // Determine category from blueprint or keywords
+        let category = "general";
+        if (keywords.includes("project") || keywords.includes("goal")) category = "productivity";
+        else if (keywords.includes("budget")) category = "finance";
+        else if (keywords.includes("workout") || keywords.includes("meal")) category = "health";
+        else if (keywords.includes("crm")) category = "business";
+        else if (keywords.includes("content")) category = "content";
+        else if (keywords.includes("study")) category = "education";
+        else if (keywords.includes("travel")) category = "travel";
+
+        const { data, error } = await supabase
+            .from("blueprint_cache")
+            .upsert(
+                {
+                    prompt_hash: promptHash,
+                    prompt_original: prompt,
+                    prompt_normalized: normalizedPrompt,
+                    keywords: keywords,
+                    blueprint: blueprint,
+                    template_title: blueprint.title,
+                    template_category: category,
+                    created_by: userId || null,
+                    successful_builds: 1,
+                },
+                {
+                    onConflict: "prompt_hash",
+                    ignoreDuplicates: false,
+                }
+            )
+            .select("id")
+            .single();
+
+        if (error) {
+            console.error("[Cache] Error caching blueprint:", error);
+            return null;
+        }
+
+        console.log(`[Cache] Blueprint cached: "${blueprint.title}" (ID: ${data.id})`);
+        return data.id;
+    } catch (error) {
+        console.error("[Cache] Error caching blueprint:", error);
+        return null;
+    }
+}
+
+/**
+ * Update cache statistics after a build
+ */
+export async function updateCacheStats(
+    cacheId: string,
+    success: boolean
+): Promise<void> {
+    try {
+        const supabase = getSupabaseAdmin();
+
+        if (success) {
+            await supabase.rpc("increment_cache_usage", {
+                cache_id: cacheId,
+                was_successful: true,
+            });
+        } else {
+            await supabase.rpc("increment_cache_usage", {
+                cache_id: cacheId,
+                was_successful: false,
+            });
+        }
+    } catch (error) {
+        console.error("[Cache] Error updating cache stats:", error);
+    }
+}
+
+/**
+ * Store a successfully built template for reference
+ */
+export async function storeBuiltTemplate(
+    blueprintCacheId: string | null,
+    title: string,
+    description: string,
+    notionPageId: string,
+    notionUrl: string,
+    duplicateLink: string,
+    userId?: string
+): Promise<string | null> {
+    try {
+        const supabase = getSupabaseAdmin();
+
+        const { data, error } = await supabase
+            .from("built_templates")
+            .insert({
+                blueprint_cache_id: blueprintCacheId,
+                template_title: title,
+                template_description: description,
+                notion_page_id: notionPageId,
+                notion_url: notionUrl,
+                duplicate_link: duplicateLink,
+                user_id: userId || null,
+                is_public: true,
+            })
+            .select("id")
+            .single();
+
+        if (error) {
+            console.error("[Cache] Error storing built template:", error);
+            return null;
+        }
+
+        console.log(`[Cache] Built template stored: "${title}" (ID: ${data.id})`);
+        return data.id;
+    } catch (error) {
+        console.error("[Cache] Error storing built template:", error);
+        return null;
+    }
+}
+
+/**
+ * Get cache analytics
+ */
+export async function getCacheAnalytics(): Promise<{
+    totalCached: number;
+    totalHits: number;
+    hitRate: number;
+    popularTemplates: Array<{ title: string; uses: number }>;
+} | null> {
+    try {
+        const supabase = getSupabaseAdmin();
+
+        // Get total cached blueprints and usage
+        const { data: stats, error: statsError } = await supabase
+            .from("blueprint_cache")
+            .select("id, template_title, times_used, successful_builds");
+
+        if (statsError || !stats) {
+            return null;
+        }
+
+        const totalCached = stats.length;
+        const totalHits = stats.reduce((sum, s) => sum + s.times_used, 0);
+        const totalBuilds = stats.reduce((sum, s) => sum + s.successful_builds, 0);
+        const hitRate = totalBuilds > 0 ? (totalHits - totalCached) / totalBuilds : 0;
+
+        // Get popular templates
+        const popularTemplates = stats
+            .filter((s) => s.times_used > 1)
+            .sort((a, b) => b.times_used - a.times_used)
+            .slice(0, 5)
+            .map((s) => ({ title: s.template_title, uses: s.times_used }));
+
+        return {
+            totalCached,
+            totalHits,
+            hitRate: Math.round(hitRate * 100),
+            popularTemplates,
+        };
+    } catch (error) {
+        console.error("[Cache] Error getting analytics:", error);
+        return null;
+    }
+}
