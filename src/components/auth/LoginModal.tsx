@@ -29,7 +29,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
         try {
             if (isSignUp) {
-                const { error: signUpError } = await supabase.auth.signUp({
+                const { data, error: signUpError } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
@@ -39,12 +39,44 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                     },
                 });
                 if (signUpError) throw signUpError;
+
+                // Create user record in public.users table
+                if (data?.user) {
+                    await supabase.from("users").upsert({
+                        id: data.user.id,
+                        email: data.user.email,
+                        full_name: name || null,
+                        subscription_plan: "free",
+                        subscription_status: "active",
+                        ai_generations_lifetime: 0,
+                        bonus_credits: 0,
+                        is_suspended: false,
+                        is_admin: data.user.email === "biplavsoccer007@gmail.com",
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: "id" });
+                }
             } else {
-                const { error: signInError } = await supabase.auth.signInWithPassword({
+                const { data, error: signInError } = await supabase.auth.signInWithPassword({
                     email,
                     password,
                 });
                 if (signInError) throw signInError;
+
+                // Ensure user exists in public.users table (for users who signed up before this fix)
+                if (data?.user) {
+                    await supabase.from("users").upsert({
+                        id: data.user.id,
+                        email: data.user.email,
+                        full_name: data.user.user_metadata?.full_name || null,
+                        subscription_plan: "free",
+                        subscription_status: "active",
+                        ai_generations_lifetime: 0,
+                        bonus_credits: 0,
+                        is_suspended: false,
+                        is_admin: data.user.email === "biplavsoccer007@gmail.com",
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: "id", ignoreDuplicates: true });
+                }
             }
             onClose();
         } catch (err: any) {

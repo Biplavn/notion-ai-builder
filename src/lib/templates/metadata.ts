@@ -11,8 +11,6 @@ export interface TemplateMetadata {
     isPro: boolean;
     price: number;
     author: string;
-    downloads: number;
-    rating: number;
     previewImage?: string; // URL or path to preview image
     duplicateLink?: string; // Notion duplicate URL for easy installation
 }
@@ -44,11 +42,8 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1247,
-        rating: 4.9,
         previewImage: "/templates/habit-tracker.png",
-        // TODO: Replace with your actual Notion template URL
-        duplicateLink: "https://www.notion.so/templates/habit-tracker-simple"
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81908e83d8ca11a4d77a?duplicate=true"
     },
     {
         id: "project-tracker",
@@ -60,9 +55,8 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2156,
-        rating: 4.8,
-        previewImage: "/templates/project-tracker.png"
+        previewImage: "/templates/project-tracker.png",
+        duplicateLink: "https://www.notion.so/2eab05bc67ee8143ac6cecf776c7aa16?duplicate=true"
     },
     {
         id: "goal-tracker",
@@ -74,8 +68,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1834,
-        rating: 4.9
+        duplicateLink: "https://www.notion.so/2eab05bc67ee810781f0f4c81739e170?duplicate=true"
     },
     {
         id: "daily-planner",
@@ -87,8 +80,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 3421,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81a0be02ccc9cb55a419?duplicate=true"
     },
     {
         id: "meeting-notes",
@@ -100,8 +92,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2987,
-        rating: 4.7
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81d698cbd3541d5bc885?duplicate=true"
     },
     {
         id: "okr-tracker",
@@ -113,8 +104,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 9,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.9
     },
     {
         id: "eisenhower-matrix",
@@ -126,8 +115,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1892,
-        rating: 4.6
     },
     {
         id: "pomodoro-tracker",
@@ -139,8 +126,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.7
     },
     {
         id: "weekly-review",
@@ -152,8 +137,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.8
     },
     {
         id: "reading-list",
@@ -165,8 +148,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2456,
-        rating: 4.9
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81ec8779f3fb52b2e30c?duplicate=true"
     },
     {
         id: "note-taking-system",
@@ -178,8 +160,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 12,
         author: "Bartlabs",
-        downloads: 1234,
-        rating: 4.9
     },
     {
         id: "decision-log",
@@ -191,8 +171,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 987,
-        rating: 4.6
     },
     {
         id: "idea-inbox",
@@ -204,8 +182,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.7
     },
     {
         id: "time-tracker",
@@ -217,8 +193,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2345,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee8184ac89f27f5aee9e29?duplicate=true"
     },
     {
         id: "sprint-planner",
@@ -230,8 +205,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 15,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.9
     },
     {
         id: "kanban-board",
@@ -243,8 +216,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 3567,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee8193844bdec25dc99742?duplicate=true"
     },
     {
         id: "gtd-system",
@@ -256,8 +228,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 18,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.9
     },
     {
         id: "wiki-knowledge-base",
@@ -269,8 +239,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 20,
         author: "Bartlabs",
-        downloads: 1789,
-        rating: 4.8
     },
     {
         id: "bookmark-manager",
@@ -282,8 +250,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.6
     },
     {
         id: "password-vault",
@@ -295,8 +261,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2876,
-        rating: 4.7
     },
 
     // FINANCE (15 templates)
@@ -310,9 +274,8 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 4123,
-        rating: 4.9,
-        previewImage: "/templates/expense-tracker.png"
+        previewImage: "/templates/expense-tracker.png",
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81e68678eb5e7527a23e?duplicate=true"
     },
     {
         id: "budget-planner",
@@ -324,8 +287,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 3456,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81d89081ce6bfb856609?duplicate=true"
     },
     {
         id: "investment-tracker",
@@ -337,8 +299,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 15,
         author: "Bartlabs",
-        downloads: 2345,
-        rating: 4.9
     },
     {
         id: "debt-payoff",
@@ -350,8 +310,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1987,
-        rating: 4.7
     },
     {
         id: "subscription-tracker",
@@ -363,8 +321,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2678,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81ea8cc5ce1541966e0f?duplicate=true"
     },
     {
         id: "invoice-manager",
@@ -376,8 +333,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 12,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.9
     },
     {
         id: "net-worth-tracker",
@@ -389,8 +344,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.8
     },
     {
         id: "savings-goals",
@@ -402,8 +355,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2234,
-        rating: 4.7
+        duplicateLink: "https://www.notion.so/2eab05bc67ee811cb693c625144c7214?duplicate=true"
     },
     {
         id: "tax-organizer",
@@ -415,8 +367,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.6
     },
     {
         id: "crypto-portfolio",
@@ -428,8 +378,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 10,
         author: "Bartlabs",
-        downloads: 1987,
-        rating: 4.8
     },
     {
         id: "rental-property",
@@ -441,8 +389,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 18,
         author: "Bartlabs",
-        downloads: 1234,
-        rating: 4.9
     },
     {
         id: "business-finances",
@@ -454,8 +400,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 25,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.9
     },
     {
         id: "bill-tracker",
@@ -467,8 +411,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2456,
-        rating: 4.7
+        duplicateLink: "https://www.notion.so/2eab05bc67ee810e819ad338c7648a7d?duplicate=true"
     },
     {
         id: "financial-dashboard",
@@ -480,8 +423,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 20,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.9
     },
     {
         id: "receipt-organizer",
@@ -493,8 +434,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1345,
-        rating: 4.6
     },
 
     // HEALTH & FITNESS (12 templates)
@@ -508,8 +447,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2876,
-        rating: 4.9
+        duplicateLink: "https://www.notion.so/2eab05bc67ee8147b35ceabbfc2da2ad?duplicate=true"
     },
     {
         id: "meal-planner",
@@ -521,8 +459,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 3234,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81bb8f34ec4c97d74d38?duplicate=true"
     },
     {
         id: "calorie-tracker",
@@ -534,8 +471,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2567,
-        rating: 4.7
     },
     {
         id: "water-tracker",
@@ -547,8 +482,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.6
     },
     {
         id: "sleep-tracker",
@@ -560,8 +493,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81908078e79dc01171be?duplicate=true"
     },
     {
         id: "meditation-log",
@@ -573,8 +505,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.7
     },
     {
         id: "symptom-tracker",
@@ -586,8 +516,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.8
     },
     {
         id: "running-log",
@@ -599,8 +527,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1987,
-        rating: 4.9
     },
     {
         id: "yoga-practice",
@@ -612,8 +538,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.7
     },
     {
         id: "weight-tracker",
@@ -625,8 +549,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2345,
-        rating: 4.8
     },
     {
         id: "recipe-book",
@@ -638,8 +560,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2678,
-        rating: 4.9
     },
     {
         id: "mental-health",
@@ -651,8 +571,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.9
     },
 
     // CONTENT CREATION (10 templates)
@@ -666,8 +584,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2987,
-        rating: 4.9
+        duplicateLink: "https://www.notion.so/2eab05bc67ee8181addfc74d99079d07?duplicate=true"
     },
     {
         id: "youtube-planner",
@@ -679,8 +596,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 15,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.9
     },
     {
         id: "blog-manager",
@@ -692,8 +607,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81da9bc7d95dfa0d7632?duplicate=true"
     },
     {
         id: "social-media-planner",
@@ -705,8 +619,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 12,
         author: "Bartlabs",
-        downloads: 2456,
-        rating: 4.9
     },
     {
         id: "podcast-planner",
@@ -718,8 +630,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 18,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.8
     },
     {
         id: "newsletter-manager",
@@ -731,8 +641,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.7
     },
     {
         id: "video-production",
@@ -744,8 +652,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 20,
         author: "Bartlabs",
-        downloads: 1234,
-        rating: 4.9
     },
     {
         id: "photography-portfolio",
@@ -757,8 +663,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1987,
-        rating: 4.8
     },
     {
         id: "writing-projects",
@@ -770,8 +674,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.7
     },
     {
         id: "influencer-collab",
@@ -783,8 +685,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 15,
         author: "Bartlabs",
-        downloads: 1345,
-        rating: 4.8
     },
 
     // BUSINESS (15 templates)
@@ -798,8 +698,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 3456,
-        rating: 4.9
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81529cfdd035c6c9e6c9?duplicate=true"
     },
     {
         id: "sales-pipeline",
@@ -811,8 +710,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 20,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.9
     },
     {
         id: "client-portal",
@@ -824,8 +721,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 25,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81bbbe70ddd8eba353c6?duplicate=true"
     },
     {
         id: "freelance-business",
@@ -837,8 +733,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 30,
         author: "Bartlabs",
-        downloads: 2456,
-        rating: 4.9
+        duplicateLink: "https://www.notion.so/2eab05bc67ee8101b940f2575d886a16?duplicate=true"
     },
     {
         id: "employee-directory",
@@ -850,8 +745,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.7
     },
     {
         id: "recruitment-pipeline",
@@ -863,8 +756,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 18,
         author: "Bartlabs",
-        downloads: 1345,
-        rating: 4.8
     },
     {
         id: "vendor-management",
@@ -876,8 +767,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 987,
-        rating: 4.6
     },
     {
         id: "inventory-management",
@@ -889,8 +778,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 22,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.9
     },
     {
         id: "business-plan",
@@ -902,8 +789,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1234,
-        rating: 4.7
     },
     {
         id: "competitor-analysis",
@@ -915,8 +800,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.8
     },
     {
         id: "product-roadmap",
@@ -928,8 +811,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 15,
         author: "Bartlabs",
-        downloads: 1987,
-        rating: 4.9
     },
     {
         id: "customer-feedback",
@@ -941,8 +822,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.7
     },
     {
         id: "swot-analysis",
@@ -954,8 +833,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1234,
-        rating: 4.6
     },
     {
         id: "partnership-tracker",
@@ -967,8 +844,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 876,
-        rating: 4.7
     },
     {
         id: "business-metrics",
@@ -980,8 +855,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 20,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.9
     },
 
     // PERSONAL (8 templates)
@@ -995,8 +868,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 25,
         author: "Bartlabs",
-        downloads: 2345,
-        rating: 4.9
     },
     {
         id: "gratitude-journal",
@@ -1008,8 +879,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee813d911adfc220cd10c0?duplicate=true"
     },
     {
         id: "bucket-list",
@@ -1021,8 +891,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.7
     },
     {
         id: "relationship-tracker",
@@ -1034,8 +902,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1234,
-        rating: 4.6
     },
     {
         id: "home-inventory",
@@ -1047,8 +913,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 987,
-        rating: 4.5
     },
     {
         id: "car-maintenance",
@@ -1060,8 +924,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.7
     },
     {
         id: "pet-care",
@@ -1073,8 +935,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.8
     },
     {
         id: "gift-planner",
@@ -1086,8 +946,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1345,
-        rating: 4.6
     },
 
     // EDUCATION (8 templates)
@@ -1101,8 +959,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 4567,
-        rating: 4.9
+        duplicateLink: "https://www.notion.so/2eab05bc67ee818d9828f71638302b67?duplicate=true"
     },
     {
         id: "course-planner",
@@ -1114,8 +971,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2345,
-        rating: 4.8
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81589cd5e9646759492a?duplicate=true"
     },
     {
         id: "research-tracker",
@@ -1127,8 +983,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.7
     },
     {
         id: "flashcard-system",
@@ -1140,8 +994,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.9
     },
     {
         id: "language-learning",
@@ -1153,8 +1005,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.8
     },
     {
         id: "teacher-planner",
@@ -1166,8 +1016,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 15,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.9
     },
     {
         id: "online-course-tracker",
@@ -1179,8 +1027,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1987,
-        rating: 4.7
     },
     {
         id: "study-schedule",
@@ -1192,8 +1038,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2234,
-        rating: 4.8
     },
 
     // TRAVEL (6 templates)
@@ -1207,8 +1051,7 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2987,
-        rating: 4.9
+        duplicateLink: "https://www.notion.so/2eab05bc67ee81f6abc9c40303e3ed8d?duplicate=true"
     },
     {
         id: "trip-itinerary",
@@ -1220,8 +1063,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.8
     },
     {
         id: "packing-list",
@@ -1233,8 +1074,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.7
     },
     {
         id: "travel-journal",
@@ -1246,8 +1085,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.9
     },
     {
         id: "destination-research",
@@ -1259,8 +1096,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1345,
-        rating: 4.6
     },
     {
         id: "travel-budget",
@@ -1272,8 +1107,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.8
     },
 
     // DEVELOPMENT (6 templates)
@@ -1287,8 +1120,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2456,
-        rating: 4.9
     },
     {
         id: "code-snippets",
@@ -1300,8 +1131,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 2134,
-        rating: 4.8
     },
     {
         id: "api-documentation",
@@ -1313,8 +1142,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.7
     },
     {
         id: "tech-stack",
@@ -1326,8 +1153,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.6
     },
     {
         id: "learning-roadmap",
@@ -1339,8 +1164,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1987,
-        rating: 4.9
     },
     {
         id: "deployment-checklist",
@@ -1352,8 +1175,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.8
     },
 
     // DESIGN (4 templates)
@@ -1367,8 +1188,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 20,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.9
     },
     {
         id: "client-projects",
@@ -1380,8 +1199,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.8
     },
     {
         id: "brand-guidelines",
@@ -1393,8 +1210,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1234,
-        rating: 4.7
     },
     {
         id: "inspiration-board",
@@ -1406,8 +1221,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1876,
-        rating: 4.8
     },
 
     // MARKETING (6 templates)
@@ -1421,8 +1234,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 18,
         author: "Bartlabs",
-        downloads: 1987,
-        rating: 4.9
     },
     {
         id: "email-marketing",
@@ -1434,8 +1245,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1678,
-        rating: 4.8
     },
     {
         id: "seo-tracker",
@@ -1447,8 +1256,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 15,
         author: "Bartlabs",
-        downloads: 1567,
-        rating: 4.9
     },
     {
         id: "lead-magnet-tracker",
@@ -1460,8 +1267,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1345,
-        rating: 4.7
     },
     {
         id: "brand-mentions",
@@ -1473,8 +1278,6 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: false,
         price: 0,
         author: "Bartlabs",
-        downloads: 1234,
-        rating: 4.6
     },
     {
         id: "affiliate-program",
@@ -1486,7 +1289,5 @@ export const CURATED_TEMPLATES: TemplateMetadata[] = [
         isPro: true,
         price: 20,
         author: "Bartlabs",
-        downloads: 1456,
-        rating: 4.8
     }
 ];

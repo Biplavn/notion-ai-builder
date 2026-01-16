@@ -25,6 +25,34 @@ export async function GET(request: Request) {
             }
 
             console.log("✅ Session established for user:", data?.user?.email)
+
+            // Create or update user record in public.users table
+            if (data?.user) {
+                const { error: upsertError } = await supabase
+                    .from("users")
+                    .upsert({
+                        id: data.user.id,
+                        email: data.user.email,
+                        full_name: data.user.user_metadata?.full_name || data.user.user_metadata?.name || null,
+                        avatar_url: data.user.user_metadata?.avatar_url || data.user.user_metadata?.picture || null,
+                        subscription_plan: "free",
+                        subscription_status: "active",
+                        ai_generations_lifetime: 0,
+                        bonus_credits: 0,
+                        is_suspended: false,
+                        is_admin: data.user.email === "biplavsoccer007@gmail.com",
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: "id",
+                        ignoreDuplicates: false
+                    })
+
+                if (upsertError) {
+                    console.error("User upsert error:", upsertError.message)
+                } else {
+                    console.log("✅ User record created/updated for:", data.user.email)
+                }
+            }
         } catch (e: any) {
             console.error("Auth callback exception:", e.message)
             return NextResponse.redirect(`${origin}/?auth_error=${encodeURIComponent("Failed to complete sign in")}`)

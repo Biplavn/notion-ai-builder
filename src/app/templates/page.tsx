@@ -240,16 +240,7 @@ function TemplateCard({ template }: { template: TemplateMetadata }) {
 
                     {/* Footer */}
                     <div className="flex items-center justify-between pt-4 border-t border-gray-100">
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-1.5">
-                                <Download className="w-3.5 h-3.5" />
-                                <span className="font-medium">{template.downloads.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5">
-                                <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                <span className="font-medium">{template.rating}</span>
-                            </div>
-                        </div>
+                        <span className="text-xs text-muted-foreground">{template.category}</span>
                         {template.price > 0 ? (
                             <span className="text-base font-bold text-gray-900">${template.price}</span>
                         ) : (

@@ -178,13 +178,38 @@ export function smartSearch(
 }
 
 /**
- * Get popular templates as fallback suggestions
+ * Get featured templates as fallback suggestions
+ * Returns a mix of templates from different categories
  */
 export function getPopularTemplates(limit: number = 6, excludeIds: string[] = []): TemplateMetadata[] {
-    return CURATED_TEMPLATES
-        .filter(t => !excludeIds.includes(t.id))
-        .sort((a, b) => b.downloads - a.downloads)
-        .slice(0, limit);
+    const filtered = CURATED_TEMPLATES.filter(t => !excludeIds.includes(t.id));
+
+    // Get a diverse mix of templates from different categories
+    const byCategory = new Map<string, TemplateMetadata[]>();
+    for (const t of filtered) {
+        if (!byCategory.has(t.category)) {
+            byCategory.set(t.category, []);
+        }
+        byCategory.get(t.category)!.push(t);
+    }
+
+    // Take one from each category until we have enough
+    const result: TemplateMetadata[] = [];
+    const categories = Array.from(byCategory.keys());
+    let idx = 0;
+
+    while (result.length < limit && idx < filtered.length) {
+        for (const category of categories) {
+            const templates = byCategory.get(category)!;
+            const catIdx = Math.floor(idx / categories.length);
+            if (catIdx < templates.length && result.length < limit) {
+                result.push(templates[catIdx]);
+            }
+        }
+        idx += categories.length;
+    }
+
+    return result.slice(0, limit);
 }
 
 /**

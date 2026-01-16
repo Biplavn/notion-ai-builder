@@ -43,6 +43,9 @@ export async function POST(req: NextRequest) {
         }
 
         // Use service role for cache operations
+        if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+            return NextResponse.json({ error: "Service role key not configured" }, { status: 500 });
+        }
         const adminClient = createClient(
             env.NEXT_PUBLIC_SUPABASE_URL,
             env.SUPABASE_SERVICE_ROLE_KEY

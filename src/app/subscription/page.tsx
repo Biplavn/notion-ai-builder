@@ -104,7 +104,7 @@ export default function SubscriptionPage() {
     if (!user) return null;
 
     const bonusCredits = user.bonus_credits || 0;
-    const totalCredits = isPro ? "Unlimited" : (Math.max(0, 5 - (user.ai_generations_lifetime || 0)) + bonusCredits);
+    const totalCredits = isPro ? "Unlimited" : (Math.max(0, 10 - (user.ai_generations_lifetime || 0)) + bonusCredits);
 
     return (
         <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
@@ -204,7 +204,7 @@ export default function SubscriptionPage() {
                             </li>
                             <li className="flex items-start gap-2">
                                 <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                                <span className="text-gray-600 dark:text-gray-400">5 AI generations (lifetime)</span>
+                                <span className="text-gray-600 dark:text-gray-400">10 AI generations (lifetime)</span>
                             </li>
                             <li className="flex items-start gap-2">
                                 <X className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />

@@ -241,17 +241,16 @@ export default function TemplateDetailPage() {
 
                             {/* Meta */}
                             <div className="flex items-center gap-6 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-2">
-                                    <Download className="w-4 h-4" />
-                                    <span>{template.downloads} installs</span>
-                                </div>
-                                <RatingSummary
-                                    rating={reviewStats.avgRating || template.rating}
-                                    reviewCount={reviewStats.reviewCount}
-                                />
+                                {reviewStats.reviewCount > 0 && (
+                                    <RatingSummary
+                                        rating={reviewStats.avgRating}
+                                        reviewCount={reviewStats.reviewCount}
+                                    />
+                                )}
                                 <div>
                                     <span>by {template.author}</span>
                                 </div>
+                                <span className="px-2 py-0.5 bg-muted rounded text-xs">{template.category}</span>
                             </div>
                         </div>
 
@@ -541,11 +540,16 @@ export default function TemplateDetailPage() {
                 isOpen={showGetTemplateModal}
                 onClose={() => setShowGetTemplateModal(false)}
                 template={template}
+                hasBlueprint={Boolean(installBlueprint)}
                 onSelectDuplicate={() => {
                     if (template.duplicateLink) {
                         window.open(template.duplicateLink, '_blank');
                         setShowGetTemplateModal(false);
                     }
+                }}
+                onSelectDownload={() => {
+                    handleInstall();
+                    setShowGetTemplateModal(false);
                 }}
                 onSelectAI={() => {
                     setShowGetTemplateModal(false);

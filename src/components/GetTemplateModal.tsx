@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Copy, Sparkles, ArrowRight, Zap, ExternalLink } from "lucide-react";
+import { X, Copy, Sparkles, ArrowRight, Zap, ExternalLink, Download } from "lucide-react";
 
 interface GetTemplateModalProps {
     isOpen: boolean;
@@ -15,6 +15,8 @@ interface GetTemplateModalProps {
     };
     onSelectDuplicate: () => void;
     onSelectAI: () => void;
+    onSelectDownload?: () => void;
+    hasBlueprint?: boolean;
 }
 
 export function GetTemplateModal({
@@ -22,11 +24,14 @@ export function GetTemplateModal({
     onClose,
     template,
     onSelectDuplicate,
-    onSelectAI
+    onSelectAI,
+    onSelectDownload,
+    hasBlueprint = false
 }: GetTemplateModalProps) {
     if (!isOpen) return null;
 
     const hasDuplicateLink = Boolean(template.duplicateLink);
+    const canDownload = hasBlueprint && onSelectDownload;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
@@ -48,7 +53,7 @@ export function GetTemplateModal({
                 </div>
 
                 {/* Options */}
-                <div className={`grid gap-4 mb-6 ${hasDuplicateLink ? 'md:grid-cols-2' : 'max-w-md mx-auto'}`}>
+                <div className={`grid gap-4 mb-6 ${(hasDuplicateLink || canDownload) ? 'md:grid-cols-2' : 'max-w-md mx-auto'}`}>
                     {/* Option 1: Duplicate Link */}
                     {hasDuplicateLink && (
                         <button
@@ -90,7 +95,48 @@ export function GetTemplateModal({
                         </button>
                     )}
 
-                    {/* Option 2: AI Generation */}
+                    {/* Option 2: Download JSON Blueprint */}
+                    {canDownload && (
+                        <button
+                            onClick={onSelectDownload}
+                            className="group relative p-6 rounded-xl border-2 border-green-500/30 hover:border-green-500 transition-all duration-300 text-left bg-gradient-to-br from-green-500/5 to-emerald-500/10 hover:shadow-lg hover:shadow-green-500/10"
+                        >
+                            <div className="absolute top-3 right-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded">
+                                DOWNLOAD
+                            </div>
+
+                            <div className="w-12 h-12 rounded-full bg-green-500/10 text-green-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                <Download className="w-6 h-6" />
+                            </div>
+
+                            <h3 className="text-xl font-bold mb-2">Download Template</h3>
+                            <p className="text-sm text-muted-foreground mb-4">
+                                Download as JSON file to import into Notion manually.
+                            </p>
+
+                            <div className="space-y-2 text-sm">
+                                <div className="flex items-center gap-2 text-green-600">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
+                                    <span>Offline access</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-green-600">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
+                                    <span>Import via Notion</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-green-600">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-green-600"></div>
+                                    <span>No credits needed</span>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 flex items-center gap-2 text-green-600 font-medium group-hover:gap-3 transition-all">
+                                <span>Download JSON</span>
+                                <Download className="w-4 h-4" />
+                            </div>
+                        </button>
+                    )}
+
+                    {/* Option 3: AI Generation */}
                     <button
                         onClick={onSelectAI}
                         className="group relative p-6 rounded-xl border-2 border-accent/30 hover:border-accent transition-all duration-300 text-left bg-gradient-to-br from-accent/5 to-purple-500/10 hover:shadow-lg hover:shadow-accent/10"
@@ -141,6 +187,11 @@ export function GetTemplateModal({
                                     <>
                                         <strong>Duplicate</strong> is perfect if you want to start immediately with a proven template.{" "}
                                         <strong>AI Generation</strong> is ideal if you need specific customizations.
+                                    </>
+                                ) : canDownload ? (
+                                    <>
+                                        <strong>Download</strong> gives you a JSON file to import into Notion.{" "}
+                                        <strong>AI Generation</strong> creates a customized version tailored to your needs.
                                     </>
                                 ) : (
                                     <>
