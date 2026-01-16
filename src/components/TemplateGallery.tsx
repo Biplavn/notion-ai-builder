@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { Download, Star, Heart } from "lucide-react";
+import { Download, Star, Heart, Lightbulb, Sparkles } from "lucide-react";
 import { CURATED_TEMPLATES, TEMPLATE_CATEGORIES, TemplateMetadata } from "@/lib/templates/metadata";
 import { TemplateMockup } from "@/components/TemplateMockup";
 import { FavoriteButton } from "@/components/FavoriteButton";
+import { smartSearch, getPopularTemplates } from "@/lib/templates/smartSearch";
 
 interface TemplateGalleryProps {
     searchQuery: string;
@@ -13,13 +14,20 @@ interface TemplateGalleryProps {
 export function TemplateGallery({ searchQuery, className = "" }: TemplateGalleryProps) {
     const [selectedCategory, setSelectedCategory] = useState("All");
 
-    const filteredTemplates = CURATED_TEMPLATES.filter(template => {
-        const matchesCategory = selectedCategory === "All" || template.category === selectedCategory;
-        const matchesSearch = template.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            template.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            template.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-        return matchesCategory && matchesSearch;
-    });
+    // Use smart search for better matching
+    const searchResult = useMemo(() => {
+        return smartSearch(searchQuery, selectedCategory);
+    }, [searchQuery, selectedCategory]);
+
+    const { exactMatches, similarSuggestions, hasExactMatches } = searchResult;
+
+    // Get popular templates as fallback when no matches at all
+    const popularFallback = useMemo(() => {
+        if (!searchQuery || exactMatches.length > 0 || similarSuggestions.length > 0) {
+            return [];
+        }
+        return getPopularTemplates(6);
+    }, [searchQuery, exactMatches.length, similarSuggestions.length]);
 
     return (
         <div className={`w-full ${className}`}>
@@ -39,16 +47,62 @@ export function TemplateGallery({ searchQuery, className = "" }: TemplateGallery
                 ))}
             </div>
 
-            {/* Templates Grid */}
-            {filteredTemplates.length === 0 ? (
-                <div className="text-center py-12 border-2 border-dashed border-border rounded-xl bg-muted/30">
-                    <p className="text-muted-foreground text-lg">No templates found matching "{searchQuery}".</p>
-                    <p className="text-sm text-muted-foreground mt-2">Click "Design" above to build it with AI!</p>
+            {/* Main Results */}
+            {hasExactMatches ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {exactMatches.map((result) => (
+                        <TemplateCard key={result.template.id} template={result.template} />
+                    ))}
+                </div>
+            ) : searchQuery ? (
+                <div className="space-y-8">
+                    {/* No Exact Match Message */}
+                    <div className="text-center py-8 border-2 border-dashed border-border rounded-xl bg-muted/30">
+                        <p className="text-muted-foreground text-lg">No exact templates found for "{searchQuery}".</p>
+                        <p className="text-sm text-muted-foreground mt-2">
+                            Click <span className="font-semibold text-accent">"Design New"</span> above to build it with AI!
+                        </p>
+                    </div>
+
+                    {/* Similar Suggestions */}
+                    {similarSuggestions.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                                <Lightbulb className="w-5 h-5 text-amber-500" />
+                                <span>Similar templates you might like</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {similarSuggestions.map((result) => (
+                                    <TemplateCard
+                                        key={result.template.id}
+                                        template={result.template}
+                                        showSimilarityBadge
+                                        similarity={result.similarity}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Popular Fallback */}
+                    {popularFallback.length > 0 && (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 text-lg font-semibold text-foreground">
+                                <Sparkles className="w-5 h-5 text-purple-500" />
+                                <span>Popular templates to explore</span>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {popularFallback.map((template) => (
+                                    <TemplateCard key={template.id} template={template} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredTemplates.map((template) => (
-                        <TemplateCard key={template.id} template={template} />
+                    {exactMatches.map((result) => (
+                        <TemplateCard key={result.template.id} template={result.template} />
                     ))}
                 </div>
             )}
@@ -56,7 +110,13 @@ export function TemplateGallery({ searchQuery, className = "" }: TemplateGallery
     );
 }
 
-function TemplateCard({ template }: { template: TemplateMetadata }) {
+interface TemplateCardProps {
+    template: TemplateMetadata;
+    showSimilarityBadge?: boolean;
+    similarity?: number;
+}
+
+function TemplateCard({ template, showSimilarityBadge, similarity }: TemplateCardProps) {
     const [imageError, setImageError] = useState(false);
     const [mounted, setMounted] = useState(false);
 
@@ -104,9 +164,16 @@ function TemplateCard({ template }: { template: TemplateMetadata }) {
 
                 {/* Content */}
                 <div className="p-5 flex-1 flex flex-col bg-white">
-                    <h3 className="text-lg font-bold mb-2 group-hover:text-accent transition-colors line-clamp-1 text-gray-900">
-                        {template.name}
-                    </h3>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="text-lg font-bold group-hover:text-accent transition-colors line-clamp-1 text-gray-900">
+                            {template.name}
+                        </h3>
+                        {showSimilarityBadge && similarity && (
+                            <span className="shrink-0 px-2 py-0.5 text-[10px] font-medium rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                                {Math.round(similarity * 100)}% match
+                            </span>
+                        )}
+                    </div>
                     <p className="text-xs text-gray-500 mb-4 line-clamp-2 flex-1 leading-relaxed">
                         {template.description}
                     </p>

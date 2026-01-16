@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { X, Loader2 } from "lucide-react";
 
@@ -17,9 +17,10 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    if (!isOpen) return null;
+    // Memoize supabase client to prevent recreation on every render
+    const supabase = useMemo(() => createClient(), []);
 
-    const supabase = createClient();
+    if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

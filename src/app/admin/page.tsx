@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
     Users, LayoutTemplate, MessageSquare, BarChart3,
@@ -55,10 +55,11 @@ export default function AdminPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>("users");
 
-    const supabase = createBrowserClient(
+    // Memoize supabase client to prevent recreation on every render
+    const supabase = useMemo(() => createBrowserClient(
         env.NEXT_PUBLIC_SUPABASE_URL,
         env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
+    ), []);
 
     useEffect(() => {
         checkAuth();

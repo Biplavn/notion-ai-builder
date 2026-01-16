@@ -22,7 +22,7 @@ interface BuildResult {
 }
 
 function HomeContent() {
-  const { user, isAuthenticated, canUseAI, supabase } = useUser();
+  const { user, loading, isAuthenticated, canUseAI, supabase } = useUser();
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isLimitOpen, setIsLimitOpen] = useState(false);
   const [limitReason, setLimitReason] = useState<"trial_expired" | "limit_reached">("limit_reached");
@@ -48,6 +48,9 @@ function HomeContent() {
 
   const handleGenerate = async () => {
     if (!prompt) return;
+
+    // Wait for auth check to complete before showing login modal
+    if (loading) return;
 
     // Check if user is authenticated - use isAuthenticated for immediate check
     if (!isAuthenticated || !user) {
@@ -200,11 +203,11 @@ function HomeContent() {
               />
               <button
                 onClick={handleGenerate}
-                disabled={isLoading}
+                disabled={isLoading || loading}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50 whitespace-nowrap"
               >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Design New"}
-                {!isLoading && <Sparkles className="w-4 h-4" />}
+                {isLoading || loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Design New"}
+                {!isLoading && !loading && <Sparkles className="w-4 h-4" />}
               </button>
             </div>
 

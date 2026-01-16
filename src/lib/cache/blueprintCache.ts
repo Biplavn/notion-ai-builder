@@ -26,6 +26,32 @@ export interface CacheResult {
     source: "cache" | "generated";
 }
 
+/**
+ * Increment times_used counter for a cache entry (for analytics)
+ */
+async function incrementCacheHit(cacheId: string): Promise<void> {
+    try {
+        const supabase = getSupabaseAdmin();
+
+        // First get current value, then increment
+        const { data: current } = await supabase
+            .from("blueprint_cache")
+            .select("times_used")
+            .eq("id", cacheId)
+            .single();
+
+        if (current) {
+            await supabase
+                .from("blueprint_cache")
+                .update({ times_used: (current.times_used || 0) + 1 })
+                .eq("id", cacheId);
+        }
+    } catch (error) {
+        // Silently fail - analytics shouldn't block main flow
+        console.error("[Cache] Failed to increment cache hit:", error);
+    }
+}
+
 // Normalize prompt for consistent matching
 function normalizePrompt(prompt: string): string {
     return prompt
@@ -130,6 +156,10 @@ export async function findCachedBlueprint(
 
         if (exactMatch && !exactError) {
             console.log(`[Cache] Exact match found for prompt: "${prompt.substring(0, 50)}..."`);
+
+            // Increment times_used for cache analytics (fire and forget)
+            incrementCacheHit(exactMatch.id).catch(() => {});
+
             return {
                 found: true,
                 blueprint: exactMatch.blueprint as TemplateBlueprint,
@@ -173,6 +203,10 @@ export async function findCachedBlueprint(
                     console.log(
                         `[Cache] Similar blueprint found (${(bestScore * 100).toFixed(1)}% match): "${bestMatch.template_title}"`
                     );
+
+                    // Increment times_used for cache analytics (fire and forget)
+                    incrementCacheHit(bestMatch.id).catch(() => {});
+
                     return {
                         found: true,
                         blueprint: bestMatch.blueprint,
