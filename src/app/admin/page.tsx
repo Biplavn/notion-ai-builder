@@ -6,7 +6,7 @@ import {
     Users, LayoutTemplate, MessageSquare, BarChart3,
     Search, Crown, Ban, Gift,
     Plus, Minus, RefreshCw,
-    Sparkles, Download, Star, Shield, Eye, EyeOff, Trash2
+    Sparkles, Download, Star, Shield, Eye, EyeOff, Trash2, LogOut
 } from "lucide-react";
 import { createBrowserClient } from "@supabase/ssr";
 import { env } from "@/config/env";
@@ -54,6 +54,8 @@ export default function AdminPage() {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<TabType>("users");
+    const [currentUser, setCurrentUser] = useState<any>(null);
+    const [authError, setAuthError] = useState<string | null>(null);
 
     // Memoize supabase client to prevent recreation on every render
     const supabase = useMemo(() => createBrowserClient(
@@ -63,18 +65,61 @@ export default function AdminPage() {
 
     useEffect(() => {
         checkAuth();
+
+        // Listen for auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_IN') {
+                checkAuth();
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
     const checkAuth = async () => {
         const { data: { session } } = await supabase.auth.getSession();
 
-        if (!session?.user?.email || session.user.email !== ADMIN_EMAIL) {
-            router.push("/");
+        if (!session?.user) {
+            setCurrentUser(null);
+            setIsAuthorized(false);
+            setIsLoading(false);
+            return;
+        }
+
+        setCurrentUser(session.user);
+
+        if (session.user.email !== ADMIN_EMAIL) {
+            setAuthError("Access denied. Only administrators can access this panel.");
+            setIsAuthorized(false);
+            setIsLoading(false);
             return;
         }
 
         setIsAuthorized(true);
+        setAuthError(null);
         setIsLoading(false);
+    };
+
+    const handleGoogleSignIn = async () => {
+        setIsLoading(true);
+        const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/auth/callback?next=/admin`
+            }
+        });
+
+        if (error) {
+            setAuthError(error.message);
+            setIsLoading(false);
+        }
+    };
+
+    const handleSignOut = async () => {
+        await supabase.auth.signOut();
+        setCurrentUser(null);
+        setIsAuthorized(false);
+        setAuthError(null);
     };
 
     if (isLoading) {
@@ -85,7 +130,70 @@ export default function AdminPage() {
         );
     }
 
-    if (!isAuthorized) return null;
+    // Not logged in - show sign in screen
+    if (!currentUser) {
+        return (
+            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+                <div className="max-w-md w-full mx-4 p-8 bg-gray-900 border border-gray-800 rounded-2xl text-center">
+                    <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+                        <Shield className="w-8 h-8 text-white" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-white mb-2">Admin Panel</h1>
+                    <p className="text-gray-400 mb-8">Sign in with your administrator account to access the admin panel.</p>
+
+                    <button
+                        onClick={handleGoogleSignIn}
+                        className="w-full flex items-center justify-center gap-3 px-6 py-3 bg-white hover:bg-gray-100 text-gray-900 rounded-xl font-medium transition-colors"
+                    >
+                        <svg className="w-5 h-5" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                        </svg>
+                        Sign in with Google
+                    </button>
+
+                    <Link href="/" className="inline-block mt-6 text-sm text-gray-500 hover:text-gray-400 transition-colors">
+                        ← Back to home
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    // Logged in but not authorized
+    if (!isAuthorized) {
+        return (
+            <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+                <div className="max-w-md w-full mx-4 p-8 bg-gray-900 border border-gray-800 rounded-2xl text-center">
+                    <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-br from-red-500 to-orange-600 rounded-2xl flex items-center justify-center">
+                        <Ban className="w-8 h-8 text-white" />
+                    </div>
+                    <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
+                    <p className="text-gray-400 mb-4">
+                        You are signed in as <span className="text-white font-medium">{currentUser.email}</span>
+                    </p>
+                    <p className="text-red-400 mb-8">{authError}</p>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={handleSignOut}
+                            className="flex-1 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white rounded-xl font-medium transition-colors"
+                        >
+                            Sign Out
+                        </button>
+                        <Link
+                            href="/"
+                            className="flex-1 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-colors text-center"
+                        >
+                            Go Home
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-gray-950 text-white">
@@ -125,11 +233,18 @@ export default function AdminPage() {
                     ))}
                 </nav>
 
-                <div className="absolute bottom-4 left-4 right-4">
+                <div className="absolute bottom-4 left-4 right-4 space-y-2">
                     <div className="p-3 bg-gray-800 rounded-lg">
                         <p className="text-xs text-gray-400 mb-1">Logged in as</p>
-                        <p className="text-sm font-medium text-white truncate">{ADMIN_EMAIL}</p>
+                        <p className="text-sm font-medium text-white truncate">{currentUser?.email}</p>
                     </div>
+                    <button
+                        onClick={handleSignOut}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                    </button>
                 </div>
             </aside>
 
@@ -277,8 +392,8 @@ function UsersTab({ supabase }: { supabase: any }) {
                                     </td>
                                     <td className="p-4">
                                         <span className={`px-2 py-1 rounded text-xs font-medium ${user.subscription_plan === "pro"
-                                                ? "bg-yellow-500/20 text-yellow-400"
-                                                : "bg-gray-700 text-gray-300"
+                                            ? "bg-yellow-500/20 text-yellow-400"
+                                            : "bg-gray-700 text-gray-300"
                                             }`}>
                                             {user.subscription_plan === "pro" ? "Pro" : "Free"}
                                         </span>
@@ -315,8 +430,8 @@ function UsersTab({ supabase }: { supabase: any }) {
                                                 })}
                                                 disabled={actionLoading === user.id}
                                                 className={`p-2 rounded-lg transition-colors ${user.subscription_plan === "pro"
-                                                        ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30"
-                                                        : "bg-gray-700 text-gray-400 hover:bg-gray-600"
+                                                    ? "bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30"
+                                                    : "bg-gray-700 text-gray-400 hover:bg-gray-600"
                                                     }`}
                                                 title={user.subscription_plan === "pro" ? "Remove Pro" : "Make Pro"}
                                             >
@@ -338,8 +453,8 @@ function UsersTab({ supabase }: { supabase: any }) {
                                                 onClick={() => updateUser(user.id, { is_suspended: !user.is_suspended })}
                                                 disabled={actionLoading === user.id || user.email === ADMIN_EMAIL}
                                                 className={`p-2 rounded-lg transition-colors ${user.is_suspended
-                                                        ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
-                                                        : "bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-red-400"
+                                                    ? "bg-red-500/20 text-red-400 hover:bg-red-500/30"
+                                                    : "bg-gray-700 text-gray-400 hover:bg-gray-600 hover:text-red-400"
                                                     } ${user.email === ADMIN_EMAIL ? "opacity-50 cursor-not-allowed" : ""}`}
                                                 title={user.is_suspended ? "Unsuspend" : "Suspend"}
                                             >
@@ -570,8 +685,8 @@ function TemplatesTab({ supabase }: { supabase: any }) {
                                     <button
                                         onClick={() => updateTemplate(template.id, { is_pro: !isPro })}
                                         className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${isPro
-                                                ? "bg-yellow-500/20 text-yellow-400"
-                                                : "bg-gray-700 text-gray-400"
+                                            ? "bg-yellow-500/20 text-yellow-400"
+                                            : "bg-gray-700 text-gray-400"
                                             }`}
                                     >
                                         {isPro ? "Pro" : "Free"}
@@ -581,8 +696,8 @@ function TemplatesTab({ supabase }: { supabase: any }) {
                                     <button
                                         onClick={() => updateTemplate(template.id, { is_featured: !isFeatured })}
                                         className={`p-2 rounded-lg transition-colors ${isFeatured
-                                                ? "bg-yellow-500/20 text-yellow-400"
-                                                : "bg-gray-700 text-gray-400"
+                                            ? "bg-yellow-500/20 text-yellow-400"
+                                            : "bg-gray-700 text-gray-400"
                                             }`}
                                         title="Toggle Featured"
                                     >
@@ -593,8 +708,8 @@ function TemplatesTab({ supabase }: { supabase: any }) {
                                     <button
                                         onClick={() => updateTemplate(template.id, { is_hidden: !isHidden })}
                                         className={`p-2 rounded-lg transition-colors ${isHidden
-                                                ? "bg-red-500/20 text-red-400"
-                                                : "bg-gray-700 text-gray-400"
+                                            ? "bg-red-500/20 text-red-400"
+                                            : "bg-gray-700 text-gray-400"
                                             }`}
                                         title={isHidden ? "Show" : "Hide"}
                                     >
@@ -680,8 +795,8 @@ function ReviewsTab({ supabase }: { supabase: any }) {
                                                 <Star
                                                     key={i}
                                                     className={`w-4 h-4 ${i < review.rating
-                                                            ? "text-yellow-400 fill-yellow-400"
-                                                            : "text-gray-600"
+                                                        ? "text-yellow-400 fill-yellow-400"
+                                                        : "text-gray-600"
                                                         }`}
                                                 />
                                             ))}
@@ -798,36 +913,13 @@ function AnalyticsTab({ supabase }: { supabase: any }) {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-400">{stat.label}</p>
-                                    <p className="text-3xl font-bold text-white">{stat.value}</p>
+                                    <p className="text-2xl font-bold text-white">{stat.value}</p>
                                 </div>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
-
-            {/* Conversion Rate */}
-            <div className="mt-8 p-6 bg-gray-900 border border-gray-800 rounded-xl">
-                <h3 className="text-lg font-semibold mb-4">Conversion Metrics</h3>
-                <div className="grid grid-cols-2 gap-6">
-                    <div>
-                        <p className="text-sm text-gray-400 mb-1">Pro Conversion Rate</p>
-                        <p className="text-2xl font-bold text-green-400">
-                            {stats.totalUsers > 0
-                                ? ((stats.proUsers / stats.totalUsers) * 100).toFixed(1)
-                                : 0}%
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-400 mb-1">AI Usage Rate</p>
-                        <p className="text-2xl font-bold text-purple-400">
-                            {stats.totalUsers > 0
-                                ? ((stats.totalGenerations / stats.totalUsers)).toFixed(1)
-                                : 0} per user
-                        </p>
-                    </div>
-                </div>
-            </div>
         </div>
     );
 }
