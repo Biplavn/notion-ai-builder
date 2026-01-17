@@ -50,15 +50,25 @@ function HomeContent() {
     if (!prompt) return;
 
     // Wait for auth check to complete before showing login modal
-    if (loading) return;
+    if (loading) {
+      return;
+    }
 
-    // Check if user is authenticated - use isAuthenticated for immediate check
-    if (!isAuthenticated || !user) {
+    // Check authentication status - only check isAuthenticated, not user object
+    // The user profile might still be loading but session exists
+    if (!isAuthenticated) {
       setIsLoginOpen(true);
       return;
     }
 
+    // Now check if user can use AI (this includes null check for user)
     if (!canUseAI) {
+      // If user object is null but authenticated, profile may still be loading
+      // In this case, show a different message
+      if (!user) {
+        setStatus("Loading your account... Please try again in a moment.");
+        return;
+      }
       setLimitReason("limit_reached");
       setIsLimitOpen(true);
       return;
