@@ -236,7 +236,7 @@ export function useUser() {
     // Free templates are unlimited for everyone
     const canDownloadTemplate = true
 
-    // Check if user can use AI (free users get 10 lifetime generations + bonus credits)
+    // Check if user can use AI (free users get 5 lifetime generations + bonus credits)
     const canUseAI = user
         ? (user.subscription_plan === "pro" ||
            (user.ai_generations_lifetime < pricingConfig.plans.free.limits.aiGenerations + (user.bonus_credits || 0)))
