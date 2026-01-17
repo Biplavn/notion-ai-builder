@@ -61,14 +61,18 @@ function HomeContent() {
       return;
     }
 
-    // Now check if user can use AI (this includes null check for user)
+    // If authenticated but user profile not yet loaded, wait and retry
+    if (!user) {
+      setStatus("Loading your profile...");
+      // Auto-retry after a brief delay
+      setTimeout(() => {
+        setStatus("");
+      }, 1500);
+      return;
+    }
+
+    // Now check if user can use AI
     if (!canUseAI) {
-      // If user object is null but authenticated, profile may still be loading
-      // In this case, show a different message
-      if (!user) {
-        setStatus("Loading your account... Please try again in a moment.");
-        return;
-      }
       setLimitReason("limit_reached");
       setIsLimitOpen(true);
       return;

@@ -45,30 +45,53 @@ export function useUser() {
     // Use singleton client to prevent recreation
     const supabase = useMemo(() => getSupabaseClient(), [])
 
-    // Track fetch state to prevent concurrent fetches
-    const fetchingRef = useRef(false)
+    // Track current fetch to deduplicate by user ID
+    const currentFetchRef = useRef<string | null>(null)
+    const pendingPromiseRef = useRef<Promise<UserProfile | null> | null>(null)
 
     const fetchUserProfile = useCallback(async (userId: string, userEmail: string, userMetadata: any): Promise<UserProfile | null> => {
-        // Prevent concurrent fetches
-        if (fetchingRef.current) {
-            // Wait a bit and check again if another fetch is in progress
-            await new Promise(resolve => setTimeout(resolve, 50))
-            if (fetchingRef.current) return null
+        // If already fetching the same user, wait for that result
+        if (currentFetchRef.current === userId && pendingPromiseRef.current) {
+            return pendingPromiseRef.current
         }
-        fetchingRef.current = true
 
-        try {
-            const { data: profile, error } = await supabase
-                .from("users")
-                .select("*")
-                .eq("id", userId)
-                .single()
+        currentFetchRef.current = userId
 
-            if (profile && !error) {
-                return profile as UserProfile
-            } else {
-                // Profile might not exist yet, return basic user from session
-                console.log("Profile not found, using session data")
+        const fetchPromise = (async (): Promise<UserProfile | null> => {
+            try {
+                const { data: profile, error } = await supabase
+                    .from("users")
+                    .select("*")
+                    .eq("id", userId)
+                    .single()
+
+                if (profile && !error) {
+                    return profile as UserProfile
+                } else {
+                    // Profile might not exist yet, return basic user from session
+                    console.log("Profile not found, using session data")
+                    return {
+                        id: userId,
+                        email: userEmail,
+                        full_name: userMetadata?.full_name || null,
+                        avatar_url: userMetadata?.avatar_url || null,
+                        subscription_plan: "free" as const,
+                        subscription_status: "active",
+                        price_locked: false,
+                        grandfathered_price: null,
+                        notion_access_token: null,
+                        notion_workspace_id: null,
+                        notion_workspace_name: null,
+                        ai_generations_lifetime: 0,
+                        bonus_credits: 0,
+                        is_suspended: false,
+                        is_admin: false,
+                        created_at: new Date().toISOString()
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching profile:", error)
+                // Return fallback profile instead of null to prevent UI issues
                 return {
                     id: userId,
                     email: userEmail,
@@ -87,13 +110,14 @@ export function useUser() {
                     is_admin: false,
                     created_at: new Date().toISOString()
                 }
+            } finally {
+                currentFetchRef.current = null
+                pendingPromiseRef.current = null
             }
-        } catch (error) {
-            console.error("Error fetching profile:", error)
-            return null
-        } finally {
-            fetchingRef.current = false
-        }
+        })()
+
+        pendingPromiseRef.current = fetchPromise
+        return fetchPromise
     }, [supabase])
 
     useEffect(() => {
@@ -123,12 +147,16 @@ export function useUser() {
                     session.user.user_metadata
                 )
 
-                if (isMounted && profile) {
-                    setUser(profile)
+                if (isMounted) {
+                    // Always set user (profile is guaranteed non-null from fetchUserProfile)
+                    if (profile) {
+                        setUser(profile)
+                    }
+                    // Only set loading false AFTER user is set
+                    setLoading(false)
                 }
             } catch (error) {
                 console.error("Error fetching user:", error)
-            } finally {
                 if (isMounted) {
                     setLoading(false)
                 }
@@ -153,14 +181,15 @@ export function useUser() {
                         session.user.email || "",
                         session.user.user_metadata
                     )
-                    if (isMounted && profile) {
-                        setUser(profile)
+                    if (isMounted) {
+                        if (profile) setUser(profile)
+                        setLoading(false)
                     }
                 } else {
                     setIsAuthenticated(false)
                     setUser(null)
+                    setLoading(false)
                 }
-                setLoading(false)
                 return
             }
 
