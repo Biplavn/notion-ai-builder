@@ -1,7 +1,7 @@
 "use client"
 
 import { createBrowserClient } from "@supabase/ssr"
-import { useEffect, useState, useMemo, useCallback } from "react"
+import { useEffect, useState, useMemo, useCallback, useRef } from "react"
 import { env } from "@/config/env"
 import pricingConfig from "@/config/pricing-config.json"
 
@@ -24,18 +24,36 @@ export type UserProfile = {
     created_at: string
 }
 
+// Singleton Supabase client to prevent multiple instances
+let supabaseInstance: ReturnType<typeof createBrowserClient> | null = null
+
+function getSupabaseClient() {
+    if (!supabaseInstance) {
+        supabaseInstance = createBrowserClient(
+            env.NEXT_PUBLIC_SUPABASE_URL,
+            env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        )
+    }
+    return supabaseInstance
+}
+
 export function useUser() {
     const [user, setUser] = useState<UserProfile | null>(null)
     const [loading, setLoading] = useState(true)
     const [isAuthenticated, setIsAuthenticated] = useState(false)
 
-    // Memoize supabase client to prevent recreation on every render
-    const supabase = useMemo(() => createBrowserClient(
-        env.NEXT_PUBLIC_SUPABASE_URL,
-        env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ), [])
+    // Use singleton client to prevent recreation
+    const supabase = useMemo(() => getSupabaseClient(), [])
 
-    const fetchUserProfile = useCallback(async (userId: string, userEmail: string, userMetadata: any) => {
+    // Track if initial load is complete to prevent double fetching
+    const initialLoadDone = useRef(false)
+    const fetchingRef = useRef(false)
+
+    const fetchUserProfile = useCallback(async (userId: string, userEmail: string, userMetadata: any): Promise<UserProfile | null> => {
+        // Prevent concurrent fetches
+        if (fetchingRef.current) return null
+        fetchingRef.current = true
+
         try {
             const { data: profile, error } = await supabase
                 .from("users")
@@ -44,7 +62,7 @@ export function useUser() {
                 .single()
 
             if (profile && !error) {
-                return profile
+                return profile as UserProfile
             } else {
                 // Profile might not exist yet, return basic user from session
                 console.log("Profile not found, using session data")
@@ -70,13 +88,19 @@ export function useUser() {
         } catch (error) {
             console.error("Error fetching profile:", error)
             return null
+        } finally {
+            fetchingRef.current = false
         }
     }, [supabase])
 
     useEffect(() => {
         let isMounted = true
+        let timeoutId: NodeJS.Timeout | null = null
 
         async function getUser() {
+            // Skip if already fetched
+            if (initialLoadDone.current) return
+
             try {
                 const { data: { session } } = await supabase.auth.getSession()
 
@@ -86,6 +110,7 @@ export function useUser() {
                     setIsAuthenticated(false)
                     setUser(null)
                     setLoading(false)
+                    initialLoadDone.current = true
                     return
                 }
 
@@ -100,6 +125,7 @@ export function useUser() {
                 if (isMounted && profile) {
                     setUser(profile)
                 }
+                initialLoadDone.current = true
             } catch (error) {
                 console.error("Error fetching user:", error)
             } finally {
@@ -111,31 +137,42 @@ export function useUser() {
 
         getUser()
 
-        // Listen for auth changes
+        // Listen for auth changes with debouncing to prevent rapid updates
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             if (!isMounted) return
 
-            if (!session) {
-                setIsAuthenticated(false)
-                setUser(null)
-                setLoading(false)
-            } else {
-                setIsAuthenticated(true)
-                // Refetch user profile on auth change
-                const profile = await fetchUserProfile(
-                    session.user.id,
-                    session.user.email || "",
-                    session.user.user_metadata
-                )
-                if (isMounted && profile) {
-                    setUser(profile)
+            // Clear any pending timeout
+            if (timeoutId) clearTimeout(timeoutId)
+
+            // Debounce auth state changes to prevent rapid firing
+            timeoutId = setTimeout(async () => {
+                if (!isMounted) return
+
+                if (!session) {
+                    setIsAuthenticated(false)
+                    setUser(null)
+                    setLoading(false)
+                } else {
+                    setIsAuthenticated(true)
+                    // Only refetch on specific events, not on every change
+                    if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
+                        const profile = await fetchUserProfile(
+                            session.user.id,
+                            session.user.email || "",
+                            session.user.user_metadata
+                        )
+                        if (isMounted && profile) {
+                            setUser(profile)
+                        }
+                    }
+                    setLoading(false)
                 }
-                setLoading(false)
-            }
+            }, 100) // 100ms debounce
         })
 
         return () => {
             isMounted = false
+            if (timeoutId) clearTimeout(timeoutId)
             subscription.unsubscribe()
         }
     }, [supabase, fetchUserProfile])

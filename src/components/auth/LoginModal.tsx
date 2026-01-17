@@ -1,12 +1,22 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { X, Loader2 } from "lucide-react";
 
 interface LoginModalProps {
     isOpen: boolean;
     onClose: () => void;
+}
+
+// Singleton supabase client for auth
+let supabaseAuthClient: ReturnType<typeof createClient> | null = null;
+
+function getAuthClient() {
+    if (!supabaseAuthClient) {
+        supabaseAuthClient = createClient();
+    }
+    return supabaseAuthClient;
 }
 
 export function LoginModal({ isOpen, onClose }: LoginModalProps) {
@@ -17,8 +27,53 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    // Memoize supabase client to prevent recreation on every render
-    const supabase = useMemo(() => createClient(), []);
+    // Use singleton client to prevent memory issues in Chrome
+    const supabase = useMemo(() => getAuthClient(), []);
+
+    // Reset form state when modal opens/closes
+    useEffect(() => {
+        if (!isOpen) {
+            // Delay reset to avoid flicker during close animation
+            const timeout = setTimeout(() => {
+                setError("");
+                setLoading(false);
+            }, 200);
+            return () => clearTimeout(timeout);
+        }
+    }, [isOpen]);
+
+    // Handle escape key to close modal
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleEscape = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !loading) {
+                onClose();
+            }
+        };
+
+        document.addEventListener('keydown', handleEscape);
+        return () => document.removeEventListener('keydown', handleEscape);
+    }, [isOpen, loading, onClose]);
+
+    // Prevent body scroll when modal is open
+    useEffect(() => {
+        if (isOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isOpen]);
+
+    // Memoized close handler to prevent unnecessary rerenders
+    const handleClose = useCallback(() => {
+        if (!loading) {
+            onClose();
+        }
+    }, [loading, onClose]);
 
     if (!isOpen) return null;
 
@@ -114,17 +169,28 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4">
-            <div className="bg-background w-full max-w-md rounded-xl shadow-xl border border-border p-6 relative animate-in zoom-in-95 duration-200 my-auto">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in duration-200 p-4"
+            onClick={handleClose}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="login-modal-title"
+        >
+            <div
+                className="bg-background w-full max-w-md rounded-xl shadow-xl border border-border p-6 relative animate-in zoom-in-95 duration-200 my-auto"
+                onClick={(e) => e.stopPropagation()}
+            >
                 <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground"
+                    onClick={handleClose}
+                    className="absolute top-4 right-4 text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Close login modal"
+                    disabled={loading}
                 >
                     <X className="w-5 h-5" />
                 </button>
 
                 <div className="text-center mb-6">
-                    <h2 className="text-2xl font-bold mb-2">
+                    <h2 id="login-modal-title" className="text-2xl font-bold mb-2">
                         {isSignUp ? "Create an Account" : "Welcome Back"}
                     </h2>
                     <p className="text-sm text-muted-foreground">

@@ -1,12 +1,32 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { TemplateBlueprint } from "@/lib/types/blueprint";
 
-// Server-side Supabase client with service role for cache operations
-function getSupabaseAdmin() {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    return createClient(supabaseUrl, supabaseServiceKey);
+// Singleton Supabase admin client for cache operations
+let supabaseAdminInstance: SupabaseClient | null = null;
+
+function getSupabaseAdmin(): SupabaseClient {
+    if (!supabaseAdminInstance) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            throw new Error("Missing Supabase configuration for cache");
+        }
+
+        supabaseAdminInstance = createClient(supabaseUrl, supabaseServiceKey, {
+            auth: {
+                autoRefreshToken: false,
+                persistSession: false
+            }
+        });
+    }
+    return supabaseAdminInstance;
 }
+
+// In-memory cache for frequently accessed blueprints (LRU-style)
+const memoryCache = new Map<string, { blueprint: TemplateBlueprint; cacheId: string; timestamp: number }>();
+const MEMORY_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const MEMORY_CACHE_MAX_SIZE = 50;
 
 export interface CachedBlueprint {
     id: string;
@@ -134,49 +154,112 @@ function calculateSimilarity(prompt1: string, prompt2: string): number {
 }
 
 /**
+ * Add to memory cache with LRU eviction
+ */
+function addToMemoryCache(promptHash: string, blueprint: TemplateBlueprint, cacheId: string): void {
+    // Evict oldest entries if cache is full
+    if (memoryCache.size >= MEMORY_CACHE_MAX_SIZE) {
+        const oldestKey = memoryCache.keys().next().value;
+        if (oldestKey) memoryCache.delete(oldestKey);
+    }
+    memoryCache.set(promptHash, { blueprint, cacheId, timestamp: Date.now() });
+}
+
+/**
+ * Get from memory cache if valid
+ */
+function getFromMemoryCache(promptHash: string): { blueprint: TemplateBlueprint; cacheId: string } | null {
+    const cached = memoryCache.get(promptHash);
+    if (!cached) return null;
+
+    // Check if expired
+    if (Date.now() - cached.timestamp > MEMORY_CACHE_TTL) {
+        memoryCache.delete(promptHash);
+        return null;
+    }
+
+    // Move to end (LRU behavior)
+    memoryCache.delete(promptHash);
+    memoryCache.set(promptHash, { ...cached, timestamp: Date.now() });
+
+    return { blueprint: cached.blueprint, cacheId: cached.cacheId };
+}
+
+/**
  * Search for a similar cached blueprint
  * Returns the best match if similarity score is above threshold
+ * Optimized with in-memory caching and parallel database queries
  */
 export async function findCachedBlueprint(
     prompt: string,
     minSimilarity: number = 0.65
 ): Promise<CacheResult> {
+    const startTime = Date.now();
+    const promptHash = generatePromptHash(prompt);
+
     try {
-        const supabase = getSupabaseAdmin();
-        const keywords = extractKeywords(prompt);
-        const normalizedPrompt = normalizePrompt(prompt);
-        const promptHash = generatePromptHash(prompt);
-
-        // First, check for exact match by hash
-        const { data: exactMatch, error: exactError } = await supabase
-            .from("blueprint_cache")
-            .select("id, prompt_original, blueprint, template_title, times_used")
-            .eq("prompt_hash", promptHash)
-            .single();
-
-        if (exactMatch && !exactError) {
-            console.log(`[Cache] Exact match found for prompt: "${prompt.substring(0, 50)}..."`);
-
-            // Increment times_used for cache analytics (fire and forget)
-            incrementCacheHit(exactMatch.id).catch(() => {});
-
+        // Step 1: Check in-memory cache first (instant)
+        const memoryCached = getFromMemoryCache(promptHash);
+        if (memoryCached) {
+            console.log(`[Cache] Memory cache hit for: "${prompt.substring(0, 30)}..." (${Date.now() - startTime}ms)`);
+            // Fire and forget analytics update
+            incrementCacheHit(memoryCached.cacheId).catch(() => {});
             return {
                 found: true,
-                blueprint: exactMatch.blueprint as TemplateBlueprint,
-                cacheId: exactMatch.id,
+                blueprint: memoryCached.blueprint,
+                cacheId: memoryCached.cacheId,
                 similarity: 1.0,
                 source: "cache",
             };
         }
 
-        // If no exact match, search for similar blueprints
-        if (keywords.length > 0) {
-            const { data: similarBlueprints, error: searchError } = await supabase
+        const supabase = getSupabaseAdmin();
+        const keywords = extractKeywords(prompt);
+
+        // Step 2: Run exact match and keyword search in parallel
+        const [exactMatchPromise, keywordMatchPromise] = await Promise.allSettled([
+            // Exact hash match
+            supabase
                 .from("blueprint_cache")
-                .select("id, prompt_original, blueprint, template_title, times_used, avg_rating")
-                .contains("keywords", keywords)
-                .order("times_used", { ascending: false })
-                .limit(10);
+                .select("id, prompt_original, blueprint, template_title, times_used")
+                .eq("prompt_hash", promptHash)
+                .single(),
+            // Keyword-based search (only if we have keywords)
+            keywords.length > 0
+                ? supabase
+                    .from("blueprint_cache")
+                    .select("id, prompt_original, blueprint, template_title, times_used, avg_rating")
+                    .contains("keywords", keywords)
+                    .order("times_used", { ascending: false })
+                    .limit(10)
+                : Promise.resolve({ data: null, error: null })
+        ]);
+
+        // Check exact match first
+        if (exactMatchPromise.status === 'fulfilled') {
+            const { data: exactMatch, error: exactError } = exactMatchPromise.value;
+            if (exactMatch && !exactError) {
+                console.log(`[Cache] DB exact match found (${Date.now() - startTime}ms): "${prompt.substring(0, 30)}..."`);
+
+                // Add to memory cache for faster future lookups
+                addToMemoryCache(promptHash, exactMatch.blueprint as TemplateBlueprint, exactMatch.id);
+
+                // Fire and forget analytics
+                incrementCacheHit(exactMatch.id).catch(() => {});
+
+                return {
+                    found: true,
+                    blueprint: exactMatch.blueprint as TemplateBlueprint,
+                    cacheId: exactMatch.id,
+                    similarity: 1.0,
+                    source: "cache",
+                };
+            }
+        }
+
+        // Check keyword-based matches
+        if (keywordMatchPromise.status === 'fulfilled' && keywords.length > 0) {
+            const { data: similarBlueprints, error: searchError } = keywordMatchPromise.value;
 
             if (!searchError && similarBlueprints && similarBlueprints.length > 0) {
                 // Calculate similarity scores and find best match
@@ -201,10 +284,13 @@ export async function findCachedBlueprint(
 
                 if (bestMatch) {
                     console.log(
-                        `[Cache] Similar blueprint found (${(bestScore * 100).toFixed(1)}% match): "${bestMatch.template_title}"`
+                        `[Cache] Similar blueprint found (${(bestScore * 100).toFixed(1)}% match, ${Date.now() - startTime}ms): "${bestMatch.template_title}"`
                     );
 
-                    // Increment times_used for cache analytics (fire and forget)
+                    // Add to memory cache with the search prompt hash
+                    addToMemoryCache(promptHash, bestMatch.blueprint, bestMatch.id);
+
+                    // Fire and forget analytics
                     incrementCacheHit(bestMatch.id).catch(() => {});
 
                     return {
@@ -218,10 +304,10 @@ export async function findCachedBlueprint(
             }
         }
 
-        console.log(`[Cache] No suitable cached blueprint found for: "${prompt.substring(0, 50)}..."`);
+        console.log(`[Cache] No match found (${Date.now() - startTime}ms): "${prompt.substring(0, 30)}..."`);
         return { found: false, source: "generated" };
     } catch (error) {
-        console.error("[Cache] Error searching cache:", error);
+        console.error(`[Cache] Error searching cache (${Date.now() - startTime}ms):`, error);
         return { found: false, source: "generated" };
     }
 }
