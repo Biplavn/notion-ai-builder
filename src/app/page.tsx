@@ -104,15 +104,8 @@ function HomeContent() {
 
       if (!buildRes.ok) throw new Error(buildData.error || "Build failed");
 
-      // Increment usage count in Supabase
-      if (user?.id) {
-        await supabase
-          .from('users')
-          .update({
-            ai_generations_lifetime: (user.ai_generations_lifetime || 0) + 1
-          })
-          .eq('id', user.id);
-      }
+      // Note: Credits are deducted server-side in the API route after successful build
+      // No need to update here - prevents double counting
 
       setBuildResult({
         pageId: buildData.pageId,

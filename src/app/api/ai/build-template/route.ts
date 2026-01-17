@@ -96,13 +96,24 @@ export async function POST(req: NextRequest) {
         duplicateLink = `${notionPageUrl}?duplicate=true`;
         console.log(`🔗 Duplicate link: ${duplicateLink}`);
 
-        // Update user's generation count
+        // Template built successfully - now update user's generation count
+        // First, fetch current count from database to avoid race conditions
+        const { data: currentUser } = await supabase
+            .from('users')
+            .select('ai_generations_lifetime')
+            .eq('id', session.user.id)
+            .single();
+
+        const currentCount = currentUser?.ai_generations_lifetime || 0;
+
         await supabase
             .from('users')
             .update({
-                ai_generations_lifetime: (session.user.user_metadata?.ai_generations_lifetime || 0) + 1
+                ai_generations_lifetime: currentCount + 1
             })
             .eq('id', session.user.id);
+
+        console.log(`💳 Updated generation count: ${currentCount} → ${currentCount + 1}`);
 
         // Update cache stats if this was a cached blueprint
         if (cacheId) {
@@ -127,6 +138,7 @@ export async function POST(req: NextRequest) {
             pageId: rootPageId,
             notionUrl: notionPageUrl,
             duplicateLink: duplicateLink,
+            creditsUsed: 1,
             message: "Your custom template is ready! Click the button to duplicate it to your Notion workspace."
         });
 

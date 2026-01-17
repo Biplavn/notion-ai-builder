@@ -45,13 +45,16 @@ export function useUser() {
     // Use singleton client to prevent recreation
     const supabase = useMemo(() => getSupabaseClient(), [])
 
-    // Track if initial load is complete to prevent double fetching
-    const initialLoadDone = useRef(false)
+    // Track fetch state to prevent concurrent fetches
     const fetchingRef = useRef(false)
 
     const fetchUserProfile = useCallback(async (userId: string, userEmail: string, userMetadata: any): Promise<UserProfile | null> => {
         // Prevent concurrent fetches
-        if (fetchingRef.current) return null
+        if (fetchingRef.current) {
+            // Wait a bit and check again if another fetch is in progress
+            await new Promise(resolve => setTimeout(resolve, 50))
+            if (fetchingRef.current) return null
+        }
         fetchingRef.current = true
 
         try {
@@ -98,10 +101,8 @@ export function useUser() {
         let timeoutId: NodeJS.Timeout | null = null
 
         async function getUser() {
-            // Skip if already fetched
-            if (initialLoadDone.current) return
-
             try {
+                // Always fetch session on mount - don't skip based on refs
                 const { data: { session } } = await supabase.auth.getSession()
 
                 if (!isMounted) return
@@ -110,10 +111,10 @@ export function useUser() {
                     setIsAuthenticated(false)
                     setUser(null)
                     setLoading(false)
-                    initialLoadDone.current = true
                     return
                 }
 
+                // Set authenticated immediately when we have a session
                 setIsAuthenticated(true)
 
                 const profile = await fetchUserProfile(
@@ -125,7 +126,6 @@ export function useUser() {
                 if (isMounted && profile) {
                     setUser(profile)
                 }
-                initialLoadDone.current = true
             } catch (error) {
                 console.error("Error fetching user:", error)
             } finally {
@@ -144,7 +144,27 @@ export function useUser() {
             // Clear any pending timeout
             if (timeoutId) clearTimeout(timeoutId)
 
-            // Debounce auth state changes to prevent rapid firing
+            // For INITIAL_SESSION, handle it immediately without debounce
+            if (event === 'INITIAL_SESSION') {
+                if (session?.user) {
+                    setIsAuthenticated(true)
+                    const profile = await fetchUserProfile(
+                        session.user.id,
+                        session.user.email || "",
+                        session.user.user_metadata
+                    )
+                    if (isMounted && profile) {
+                        setUser(profile)
+                    }
+                } else {
+                    setIsAuthenticated(false)
+                    setUser(null)
+                }
+                setLoading(false)
+                return
+            }
+
+            // Debounce other auth state changes to prevent rapid firing
             timeoutId = setTimeout(async () => {
                 if (!isMounted) return
 
@@ -154,7 +174,7 @@ export function useUser() {
                     setLoading(false)
                 } else {
                     setIsAuthenticated(true)
-                    // Only refetch on specific events, not on every change
+                    // Refetch on sign in, token refresh, or user update
                     if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED') {
                         const profile = await fetchUserProfile(
                             session.user.id,
